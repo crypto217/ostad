@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+﻿import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -119,7 +119,7 @@ export default async function GradesPage({
                                 Carnet de Notes
                             </h1>
                             <p className="text-gray-500 text-sm mt-0.5">
-                                {currentClass.class_name ?? currentClass.name} — Gérez les évaluations et notes
+                                {currentClass.class_name ?? currentClass.name} â€” GÃ©rez les Ã©valuations et notes
                             </p>
                         </div>
                     </div>
@@ -141,7 +141,7 @@ export default async function GradesPage({
                             ))}
                         </div>
 
-                        {/* + Nouvelle Évaluation button */}
+                        {/* + Nouvelle Ã‰valuation button */}
                         <div className="flex items-center gap-3">
                             <ExportButton classId={classId} trimester={selectedTrimester} />
                             <AddEvaluationModal classId={classId} trimester={selectedTrimester} />
@@ -165,3 +165,4 @@ export default async function GradesPage({
         </div>
     )
 }
+
