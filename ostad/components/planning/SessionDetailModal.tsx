@@ -79,11 +79,11 @@ export default function SessionDetailModal({ isOpen, onClose, schedule, session,
     }
 
     const handleDeleteTemplate = async () => {
-        if (!confirm("Voulez-vous vraiment supprimer ce créneau de votre grille type ?")) return
+        if (!confirm("Supprimer ce créneau de la grille ? Cela n'affectera pas les séances déjà planifiées.")) return
         setIsDeleting(true)
         try {
             await deleteWeeklySlot(schedule.id)
-            alert("Créneau supprimé du template")
+            alert("Créneau supprimé avec succès !")
             onClose()
         } catch (e: any) {
             alert(e.message)
@@ -187,10 +187,10 @@ export default function SessionDetailModal({ isOpen, onClose, schedule, session,
                             <button
                                 onClick={handleDeleteTemplate}
                                 disabled={isDeleting}
-                                className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2 font-bold rounded-xl transition-colors"
+                                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-2xl inline-flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-red-200"
                             >
-                                {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
-                                Supprimer du template
+                                {isDeleting ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
+                                🗑️ Supprimer ce créneau
                             </button>
                         </div>
                     ) : !session ? (

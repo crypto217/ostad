@@ -163,13 +163,26 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                     return (
                                         <div
                                             key={schedule.id}
-                                            onClick={() => handleSlotClick(schedule, session, columnDate)}
-                                            className="bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all overflow-hidden"
+                                            className="group relative bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all overflow-hidden"
                                         >
                                             {/* Top color band */}
                                             <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
 
-                                            <div className="p-3 flex flex-col gap-1.5">
+                                            {/* Delete Button (Hover Only) */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (confirm("Supprimer ce créneau de la grille ? Cela n'affectera pas les séances déjà planifiées.")) {
+                                                        import('@/app/actions').then(m => m.deleteWeeklySlot(schedule.id));
+                                                    }
+                                                }}
+                                                className="absolute top-2 right-2 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200"
+                                                title="Supprimer"
+                                            >
+                                                ✕
+                                            </button>
+
+                                            <div onClick={() => handleSlotClick(schedule, session, columnDate)} className="p-3 flex flex-col gap-1.5">
                                                 {/* Class badge */}
                                                 <span
                                                     className="self-start text-[10px] font-bold px-2 py-0.5 rounded-full"
@@ -267,13 +280,26 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                     return (
                                         <div
                                             key={schedule.id}
-                                            onClick={() => handleSlotClick(schedule, session, columnDate)}
-                                            className="flex items-stretch gap-0 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                                            className="group relative flex items-stretch gap-0 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
                                         >
                                             {/* Left color strip */}
                                             <div className="w-1 shrink-0" style={{ backgroundColor: color }} />
 
-                                            <div className="flex items-center justify-between flex-1 px-4 py-3.5 gap-3">
+                                            {/* Delete Button (Hover Only) */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (confirm("Supprimer ce créneau de la grille ? Cela n'affectera pas les séances déjà planifiées.")) {
+                                                        import('@/app/actions').then(m => m.deleteWeeklySlot(schedule.id));
+                                                    }
+                                                }}
+                                                className="absolute top-2 right-2 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200"
+                                                title="Supprimer"
+                                            >
+                                                ✕
+                                            </button>
+
+                                            <div onClick={() => handleSlotClick(schedule, session, columnDate)} className="flex items-center justify-between flex-1 px-4 py-3.5 gap-3">
                                                 <div className="flex-1 min-w-0">
                                                     <span
                                                         className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-1"
