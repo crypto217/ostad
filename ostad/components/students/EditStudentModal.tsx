@@ -10,7 +10,7 @@ export default function EditStudentModal({ student }: { student: StudentItem }) 
     const router = useRouter()
 
     // Properly format date to YYYY-MM-DD for the input type="date"
-    const initialDate = student.date_of_birth ? new Date(student.date_of_birth).toISOString().split('T')[0] : ''
+    const initialDate = student.birth_date ? new Date(student.birth_date).toISOString().split('T')[0] : ''
 
     const [firstName, setFirstName] = useState(student.first_name)
     const [lastName, setLastName] = useState(student.last_name)
@@ -30,7 +30,7 @@ export default function EditStudentModal({ student }: { student: StudentItem }) 
                 first_name: firstName.trim(),
                 last_name: lastName.trim().toUpperCase(),
                 gender,
-                date_of_birth: dob
+                birth_date: dob
             })
             handleClose()
         } catch (error) {

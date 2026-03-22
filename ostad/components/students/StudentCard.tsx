@@ -94,7 +94,7 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                     </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                    {new Date(student.date_of_birth).toLocaleDateString('fr-FR')}
+                    {new Date(student.birth_date).toLocaleDateString('fr-FR')}
                 </td>
                 <td className="px-6 py-4 text-right">
                     <ActionsMenu />
@@ -118,7 +118,7 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                             {student.gender === 'Garçon' ? '👦' : '👧'} {student.gender}
                         </span>
                         <span className="bg-gray-300 w-1 h-1 rounded-full shrink-0" />
-                        <span>{new Date(student.date_of_birth).toLocaleDateString('fr-FR')}</span>
+                        <span>{new Date(student.birth_date).toLocaleDateString('fr-FR')}</span>
                     </div>
                 </div>
             </div>

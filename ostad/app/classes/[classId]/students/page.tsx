@@ -14,7 +14,7 @@ export interface StudentItem {
     first_name: string
     last_name: string
     gender: 'Garçon' | 'Fille'
-    date_of_birth: string
+    birth_date: string
     class_id: string
 }
 

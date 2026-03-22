@@ -79,6 +79,13 @@ export async function deleteClass(id: string) {
 // STUDENTS ACTIONS
 // ----------------------
 
+// Helper to map gender from FR to EN enum for Supabase
+function mapGender(gender: string): string {
+    if (gender === 'Garçon') return 'male'
+    if (gender === 'Fille') return 'female'
+    return gender
+}
+
 export async function createStudent(data: { class_id: string; first_name: string; last_name: string; gender: string; birth_date: string }) {
     const supabase = await getSupabase()
     const { data: { user } } = await supabase.auth.getUser()
@@ -90,7 +97,7 @@ export async function createStudent(data: { class_id: string; first_name: string
         class_id: data.class_id,
         first_name: data.first_name,
         last_name: data.last_name,
-        gender: data.gender,
+        gender: mapGender(data.gender),
         birth_date: data.birth_date
     })
 
@@ -106,7 +113,12 @@ export async function createStudent(data: { class_id: string; first_name: string
 
 export async function updateStudent(id: string, class_id: string, data: { first_name: string; last_name: string; gender: string; birth_date: string }) {
     const supabase = await getSupabase()
-    const { error } = await supabase.from('students').update(data).eq('id', id)
+    const { error } = await supabase.from('students').update({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        gender: mapGender(data.gender),
+        birth_date: data.birth_date
+    }).eq('id', id)
     if (error) throw new Error(error.message)
     revalidatePath(`/classes/${class_id}/students`)
     revalidatePath('/eleves')
