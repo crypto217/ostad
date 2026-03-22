@@ -141,7 +141,7 @@ async function DashboardContent() {
                 <div className="lg:col-span-2">
                     <HeroCard nextCourse={nextCourseFormatted} />
                 </div>
-                <div className="lg:col-span-1 min-w-0 overflow-hidden">
+                <div className="lg:col-span-1 min-w-0">
                     <TodoBlock initialTodos={topPendingTodos} />
                 </div>
             </div>

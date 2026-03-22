@@ -77,13 +77,13 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
                 <button className="text-sm font-bold text-green-500 hover:text-green-600 transition-colors">{t('dash_todo_see_all')}</button>
             </div>
 
-            <form onSubmit={addTodo} className="flex gap-3 mb-6">
+            <form onSubmit={addTodo} className="flex gap-2 items-center mb-6">
                 <input
                     type="text"
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                     placeholder={t('dash_todo_placeholder')}
-                    className="flex-1 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-2xl px-5 h-12 text-base font-medium transition-all outline-none"
+                    className="flex-1 min-w-0 bg-gray-50 border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-2xl px-5 h-12 text-base font-medium transition-all outline-none"
                 />
                 <button
                     type="submit"
