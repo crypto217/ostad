@@ -56,16 +56,18 @@ export default async function PlanningPage() {
         .lte('scheduled_time', saturday.toISOString())
 
     return (
-        <div className="min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 md:pl-[220px] xl:pl-[260px] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
-            <div className="max-w-7xl mx-auto px-4 pt-10 md:p-8 lg:p-12">
-                <WeekGrid
-                    weeklySchedules={weeklySchedules || []}
-                    courseSessions={courseSessions || []}
-                    classes={classes || []}
-                    weekStart={sunday.toISOString()}
-                />
-            </div>
+        <div className="min-h-screen bg-[#F9F9F6]">
             <Navigation />
+            <main className="md:pl-[220px] xl:pl-[260px] pb-24 md:pb-0">
+                <div className="max-w-7xl mx-auto px-4 pt-10 md:p-8 lg:p-12">
+                    <WeekGrid
+                        weeklySchedules={weeklySchedules || []}
+                        courseSessions={courseSessions || []}
+                        classes={classes || []}
+                        weekStart={sunday.toISOString()}
+                    />
+                </div>
+            </main>
         </div>
     )
 }
