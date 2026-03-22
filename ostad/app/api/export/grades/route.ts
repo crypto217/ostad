@@ -30,16 +30,15 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // 1. Fetch class details & verify ownership
-    const { data: currentClass, error: classError } = await supabase
+    // 1. Fetch class details (RLS handles ownership)
+    const { data: classData, error: classError } = await supabase
         .from('classes')
-        .select('class_name, name')
+        .select('id, class_name, name')
         .eq('id', classId)
-        .eq('teacher_id', user.id)
         .single()
 
-    if (classError || !currentClass) {
-        return NextResponse.json({ error: 'Class not found or unauthorized' }, { status: 404 })
+    if (classError || !classData) {
+        return NextResponse.json({ error: 'Class not found' }, { status: 404 })
     }
 
     // 2. Fetch students
@@ -95,7 +94,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-        className: currentClass.class_name || currentClass.name || 'Classe',
+        className: classData.class_name || classData.name || 'Classe',
         trimester: parseInt(trimester),
         students: students || [],
         evaluations,
