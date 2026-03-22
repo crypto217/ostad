@@ -53,7 +53,7 @@ export default async function PlanningPage() {
         .lte('scheduled_time', saturday.toISOString())
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 pb-32">
+        <div className="min-h-screen bg-[#F9F9F6] p-4 md:p-8 max-w-7xl mx-auto space-y-8 pb-32">
             <WeekGrid
                 weeklySchedules={weeklySchedules || []}
                 courseSessions={courseSessions || []}

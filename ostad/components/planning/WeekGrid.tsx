@@ -76,9 +76,9 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                     const daySchedules = sortedSchedules.filter(s => s.day_of_week === day.id)
 
                     return (
-                        <div key={day.id} className={`flex flex-col gap-3 rounded-3xl ${isToday ? 'ring-2 ring-green-500 bg-green-50/30 p-2 -m-2' : ''}`}>
+                        <div key={day.id} className={`flex flex-col gap-3 rounded-3xl ${isToday ? 'border-2 border-green-500 bg-green-50 p-2 -m-2' : ''}`}>
                             <div className="text-center mb-2 px-1">
-                                <h3 className={`font-bold text-sm ${isToday ? 'text-green-600' : 'text-gray-900'}`}>{day.name}</h3>
+                                <h3 className={`font-bold text-sm ${isToday ? 'text-green-600' : 'text-gray-800'}`}>{day.name}</h3>
                                 {viewMode === 'this_week' && (
                                     <p className={`text-xs mt-1 font-medium ${isToday ? 'text-green-500' : 'text-gray-400'}`}>
                                         {columnDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
@@ -87,7 +87,7 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                             </div>
 
                             {daySchedules.length === 0 ? (
-                                <div className="text-center text-xs font-medium text-gray-300 py-6 border-2 border-dashed border-gray-100 rounded-2xl">Libre</div>
+                                <div className="text-center text-xs font-medium text-gray-400 py-6 bg-white border-2 border-dashed border-gray-200 rounded-2xl">Libre</div>
                             ) : (
                                 daySchedules.map(schedule => {
                                     // Match session logic: Same class, same day, same starting hour/minute or matched by weekly_schedule_id
@@ -162,7 +162,7 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                     return (
                         <div key={day.id} className={`bg-white rounded-3xl p-5 shadow-sm border ${isToday ? 'border-green-200 ring-4 ring-green-50' : 'border-gray-100'}`}>
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
                                     {day.name}
                                     {isToday && <span className="text-[10px] font-bold bg-green-100 text-green-600 px-2 py-0.5 rounded-full uppercase tracking-wider">Aujourd'hui</span>}
                                 </h3>

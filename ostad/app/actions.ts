@@ -46,10 +46,9 @@ export async function createClass(data: { class_name: string; color_code: string
     console.log("INSERT RESULT ERROR:", error);
 
     if (error) {
-        console.error("Throwing error from createClass:", error.message);
-        throw new Error(error.message)
+        console.error("Supabase error in createClass:", error);
+        throw new Error(error.message || "Erreur lors de la création de la classe")
     }
-    console.log("Revalidating /classes...");
     revalidatePath('/classes')
 }
 
