@@ -159,10 +159,10 @@ async function DashboardContent() {
                 </div>
             )}
 
-            {/* Main Dashboard Grid System (2/3 + 1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* Left Content Area (8/12) */}
-                <div className="lg:col-span-8 space-y-10">
+            {/* Main Dashboard Grid System (2/1) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                {/* Left Content Area (2/3) */}
+                <div className="lg:col-span-2 space-y-10">
                     <HeroCard nextCourse={nextCourseFormatted} />
                     <div className="pt-2">
                         <KPIGrid stats={stats} />
@@ -172,8 +172,8 @@ async function DashboardContent() {
                     </div>
                 </div>
 
-                {/* Right Sidebar Area (4/12) */}
-                <div className="lg:col-span-4 min-w-0">
+                {/* Right Sidebar Area (1/3) */}
+                <div className="lg:col-span-1 min-w-0">
                     <div className="sticky top-12">
                         <TodoBlock initialTodos={topPendingTodos} />
                     </div>

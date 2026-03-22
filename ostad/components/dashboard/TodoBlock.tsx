@@ -88,16 +88,16 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
 
 
     return (
-        <div className="bg-white rounded-[3rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 flex flex-col h-full min-h-[600px] transition-all relative overflow-hidden">
+        <div className="bg-white rounded-[3rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 md:p-10 flex flex-col h-full min-h-[600px] transition-all relative overflow-hidden w-full">
             {/* Header with Kinetic Summary */}
             <div className="flex justify-between items-start mb-8 z-10">
                 <div className="flex flex-col">
-                    <h3 className="text-base font-bold text-gray-900 tracking-tight leading-none uppercase">
+                    <h3 className="text-base font-bold text-gray-900 tracking-tight leading-none">
                         Mes tâches
                     </h3>
                     <div className="flex items-center gap-2 mt-3 bg-gray-50 w-fit px-3 py-1 rounded-full">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs text-gray-400 font-normal uppercase tracking-widest">
+                        <span className="text-xs text-gray-400 font-normal tracking-widest">
                             {completedTasks}/{totalTasks} terminées
                         </span>
                     </div>
@@ -122,7 +122,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             </div>
 
             {/* Dynamic Filter Tabs */}
-            <div className="flex gap-3 mb-10 overflow-x-auto no-scrollbar pb-2 z-10">
+            <div className="flex gap-2 flex-wrap mt-3 z-10 mb-10">
                 {[
                     { id: 'all', label: 'Tout', emoji: '📋' },
                     { id: 'to_correct', label: 'À corriger', emoji: '📝' },
@@ -146,7 +146,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
                 {filteredTodos.length === 0 ? (
                     <div className="text-center bg-gray-50/50 rounded-[2.5rem] py-20 border-none">
                         <div className="text-5xl mb-4 opacity-40">✨</div>
-                        <p className="text-gray-300 text-lg font-black uppercase tracking-widest">Aucune tâche</p>
+                        <p className="text-gray-300 text-lg font-black tracking-widest">Aucune tâche en attente !</p>
                     </div>
                 ) : (
                     filteredTodos.map(todo => {
