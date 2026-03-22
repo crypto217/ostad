@@ -21,16 +21,20 @@ export default function AddStudentModal({ classId }: { classId: string }) {
 
         setIsSubmitting(true)
         try {
-            await createStudent({
+            const result = await createStudent({
                 class_id: classId,
                 first_name: firstName.trim(),
                 last_name: lastName.trim().toUpperCase(),
                 gender,
-                date_of_birth: dob
+                birth_date: dob
             })
-            handleClose()
-        } catch (error) {
-            alert("Erreur lors de l'ajout de l'élève. Veuillez réessayer.")
+            if (result && 'error' in result) {
+                alert('Erreur: ' + result.error + ' Code: ' + result.code)
+            } else {
+                handleClose()
+            }
+        } catch (error: any) {
+            alert("Erreur lors de l'ajout de l'élève : " + error.message)
         } finally {
             setIsSubmitting(false)
         }

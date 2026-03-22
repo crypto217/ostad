@@ -79,18 +79,37 @@ export async function deleteClass(id: string) {
 // STUDENTS ACTIONS
 // ----------------------
 
-export async function createStudent(data: { class_id: string; first_name: string; last_name: string; gender: string; date_of_birth: string }) {
+export async function createStudent(data: { class_id: string; first_name: string; last_name: string; gender: string; birth_date: string }) {
     const supabase = await getSupabase()
-    const { error } = await supabase.from('students').insert(data)
-    if (error) throw new Error(error.message)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    console.log('STUDENT DATA:', JSON.stringify(data))
+    console.log('USER:', user?.id)
+
+    const { error } = await supabase.from('students').insert({
+        class_id: data.class_id,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        gender: data.gender,
+        birth_date: data.birth_date
+    })
+
+    if (error) {
+        console.error('STUDENT ERROR:', JSON.stringify(error))
+        return { error: error.message, code: error.code }
+    }
+
     revalidatePath(`/classes/${data.class_id}/students`)
+    revalidatePath('/eleves')
+    return { success: true }
 }
 
-export async function updateStudent(id: string, class_id: string, data: { first_name: string; last_name: string; gender: string; date_of_birth: string }) {
+export async function updateStudent(id: string, class_id: string, data: { first_name: string; last_name: string; gender: string; birth_date: string }) {
     const supabase = await getSupabase()
     const { error } = await supabase.from('students').update(data).eq('id', id)
     if (error) throw new Error(error.message)
     revalidatePath(`/classes/${class_id}/students`)
+    revalidatePath('/eleves')
 }
 
 export async function deleteStudent(id: string, class_id: string) {
