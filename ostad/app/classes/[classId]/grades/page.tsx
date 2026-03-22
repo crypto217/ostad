@@ -8,6 +8,7 @@ import AddEvaluationModal from '@/components/grades/AddEvaluationModal'
 import BackButton from '@/components/layout/BackButton'
 import Navigation from '@/components/layout/Navigation'
 import { seedDefaultGradesForExistingStudents } from '@/app/actions'
+import ExportButton from '@/components/export/ExportButton'
 
 
 export const metadata = {
@@ -141,7 +142,10 @@ export default async function GradesPage({
                         </div>
 
                         {/* + Nouvelle Évaluation button */}
-                        <AddEvaluationModal classId={classId} trimester={selectedTrimester} />
+                        <div className="flex items-center gap-3">
+                            <ExportButton classId={classId} trimester={selectedTrimester} />
+                            <AddEvaluationModal classId={classId} trimester={selectedTrimester} />
+                        </div>
                     </div>
                 </div>
 
