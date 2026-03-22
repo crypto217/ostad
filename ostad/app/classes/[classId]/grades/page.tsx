@@ -79,7 +79,7 @@ export default async function GradesPage({
                 .select('*')
                 .eq('class_id', classId)
                 .eq('trimester', selectedTrimester)
-            gradesData = seededGrades
+            gradesData = seededGrades || []
         } catch (e) {
             console.error('Auto-seed failed:', e)
         }
