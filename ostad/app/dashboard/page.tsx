@@ -121,13 +121,13 @@ async function DashboardContent() {
     }
 
     return (
-        <div className="max-w-md md:max-w-none md:container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12">
+        <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
             {classesCount === 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-8 relative overflow-hidden shadow-sm">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-5 mb-8 relative overflow-hidden shadow-sm">
                     <div className="relative z-10 text-yellow-800">
-                        <h4 className="font-bold text-base mb-1">Aucune classe</h4>
-                        <p className="text-sm mb-4 opacity-90">Vous n'avez pas encore configuré vos classes.</p>
-                        <Link href="/classes/new" className="inline-block bg-yellow-400 text-yellow-900 text-sm font-bold py-2.5 px-5 rounded-xl hover:bg-yellow-500 transition-colors shadow-sm">
+                        <h4 className="font-bold text-lg mb-1">Aucune classe</h4>
+                        <p className="text-base mb-4 opacity-90 leading-relaxed">Vous n'avez pas encore configuré vos classes.</p>
+                        <Link href="/classes/new" className="inline-block bg-yellow-400 text-yellow-900 text-base font-bold py-3 px-6 rounded-2xl hover:bg-yellow-500 transition-colors shadow-sm h-12 flex items-center w-fit">
                             Configurer mes classes →
                         </Link>
                     </div>
@@ -137,14 +137,17 @@ async function DashboardContent() {
 
             {profile && <Header profile={profile} />}
 
-            <div className="md:grid md:grid-cols-12 md:gap-8 items-start">
-                <div className="md:col-span-12 xl:col-span-8 flex flex-col gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div className="lg:col-span-2">
                     <HeroCard nextCourse={nextCourseFormatted} />
-                    <KPIGrid stats={stats} />
                 </div>
-                <div className="md:col-span-12 xl:col-span-4 mt-8 xl:mt-0">
+                <div className="lg:col-span-1">
                     <TodoBlock initialTodos={topPendingTodos} />
                 </div>
+            </div>
+
+            <div className="mt-8">
+                <KPIGrid stats={stats} />
             </div>
         </div>
     )
@@ -152,45 +155,45 @@ async function DashboardContent() {
 
 function DashboardSkeleton() {
     return (
-        <div className="max-w-md md:max-w-none md:container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12">
+        <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
             <div className="flex justify-between items-center mb-10 animate-pulse">
                 <div>
-                    <div className="h-8 bg-gray-200 rounded-full w-48 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded-full w-32"></div>
+                    <div className="h-10 bg-gray-200 rounded-full w-48 mb-3"></div>
+                    <div className="h-5 bg-gray-200 rounded-full w-32"></div>
                 </div>
                 <div className="hidden md:flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                    <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                 </div>
             </div>
 
-            <div className="md:grid md:grid-cols-12 md:gap-8 items-start">
+            <div className="flex flex-col gap-8 md:grid md:grid-cols-12 md:gap-8 items-start">
                 <div className="md:col-span-12 xl:col-span-8 flex flex-col gap-8">
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 relative overflow-hidden h-[240px] animate-pulse">
+                    <div className="bg-white rounded-3xl p-8 border border-gray-100 relative overflow-hidden h-[240px] animate-pulse shadow-sm">
                         <div className="flex justify-between items-start mb-6">
                             <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
                         </div>
-                        <div className="h-8 w-3/4 bg-gray-200 rounded-full mb-4"></div>
-                        <div className="h-4 w-1/2 bg-gray-200 rounded-full mb-8"></div>
-                        <div className="h-14 w-full bg-gray-100 rounded-3xl mt-auto absolute bottom-6 left-6 right-6" style={{ width: 'calc(100% - 48px)' }}></div>
+                        <div className="h-10 w-3/4 bg-gray-200 rounded-full mb-4"></div>
+                        <div className="h-5 w-1/2 bg-gray-200 rounded-full mb-8"></div>
+                        <div className="h-14 w-full bg-gray-100 rounded-2xl mt-auto absolute bottom-8 left-8 right-8" style={{ width: 'calc(100% - 64px)' }}></div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-5">
                         {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between aspect-[4/3] animate-pulse">
-                                <div className="w-10 h-10 rounded-full bg-gray-100 mb-2"></div>
+                            <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between aspect-[4/3] animate-pulse shadow-sm">
+                                <div className="w-12 h-12 rounded-2xl bg-gray-100 mb-2"></div>
                                 <div>
-                                    <div className="h-8 w-16 bg-gray-200 rounded-lg mb-2"></div>
-                                    <div className="h-3 w-20 bg-gray-200 rounded-full"></div>
+                                    <div className="h-10 w-16 bg-gray-200 rounded-lg mb-2"></div>
+                                    <div className="h-4 w-20 bg-gray-200 rounded-full"></div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="md:col-span-12 xl:col-span-4 mt-8 xl:mt-0">
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-8 animate-pulse">
+                <div className="md:col-span-12 xl:col-span-4 xl:mt-0">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-100 mb-8 animate-pulse shadow-sm">
                         <div className="flex justify-between items-center mb-6">
-                            <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
+                            <div className="h-7 w-24 bg-gray-200 rounded-full"></div>
                         </div>
                         <div className="flex gap-3 mb-6">
                             <div className="flex-1 h-12 bg-gray-100 rounded-2xl"></div>
@@ -198,9 +201,9 @@ function DashboardSkeleton() {
                         </div>
                         <div className="space-y-4">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex items-center gap-4 py-2">
+                                <div key={i} className="flex items-center gap-4 py-4 px-5 bg-gray-50 rounded-xl">
                                     <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0"></div>
-                                    <div className="h-4 bg-gray-100 rounded-full flex-1"></div>
+                                    <div className="h-5 bg-gray-100 rounded-full flex-1"></div>
                                 </div>
                             ))}
                         </div>
