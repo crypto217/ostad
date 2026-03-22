@@ -1,168 +1,165 @@
-﻿import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+﻿'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase'
+import { notFound, useRouter } from 'next/navigation'
+import { Loader2, Plus, ArrowLeft } from 'lucide-react'
 import GradesTable from '@/components/grades/GradesTable'
 import AddEvaluationModal from '@/components/grades/AddEvaluationModal'
+import { seedDefaultEvaluations } from '@/app/actions'
 import BackButton from '@/components/layout/BackButton'
-import Navigation from '@/components/layout/Navigation'
-import { seedDefaultGradesForExistingStudents } from '@/app/actions'
-import ExportButton from '@/components/export/ExportButton'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
+export default function GradesPage({ params }: { params: { classId: string } }) {
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
+    const router = useRouter()
+    const supabase = createClient()
 
-export const metadata = {
-    title: 'Carnet de Notes | Ostad',
-}
+    const [loading, setLoading] = useState(true)
+    const [classData, setClassData] = useState<any>(null)
+    const [students, setStudents] = useState<any[]>([])
+    const [evaluations, setEvaluations] = useState<any[]>([])
+    const [grades, setGrades] = useState<any[]>([])
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [currentTrimester, setCurrentTrimester] = useState(1)
 
-export default async function GradesPage({
-    params,
-    searchParams,
-}: {
-    params: Promise<{ classId: string }>
-    searchParams: Promise<{ t?: string }>
-}) {
-    const { classId } = await params
-    const { t } = await searchParams
+    useEffect(() => {
+        const fetchData = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                router.push('/login')
+                return
+            }
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() { return cookieStore.getAll() },
-                setAll() { },
-            },
-        }
-    )
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
-
-    const selectedTrimester = t ? parseInt(t) : 1
-
-    // Fetch class details to verify ownership
-    const { data: currentClass, error: classError } = await supabase
-        .from('classes')
-        .select('*')
-        .eq('id', classId)
-        .eq('teacher_id', user.id)
-        .single()
-
-    if (classError || !currentClass) notFound()
-
-    // Fetch all students in the class
-    const { data: students, error: studentsError } = await supabase
-        .from('students')
-        .select('id, first_name, last_name')
-        .eq('class_id', classId)
-
-    if (studentsError) throw new Error(studentsError.message)
-
-    // Fetch grades for this class and trimester
-    const { data: grades, error: gradesError } = await supabase
-        .from('grades')
-        .select('*')
-        .eq('class_id', classId)
-        .eq('trimester', selectedTrimester)
-
-    if (gradesError) throw new Error(gradesError.message)
-
-    // Auto-seed default evaluations for existing students if none exist yet
-    let gradesData = grades
-    if ((!grades || grades.length === 0) && students && students.length > 0) {
-        try {
-            await seedDefaultGradesForExistingStudents(classId)
-            // Re-fetch grades after seeding
-            const { data: seededGrades } = await supabase
-                .from('grades')
+            // Fetch class details
+            const { data: classDetails, error: classError } = await supabase
+                .from('classes')
                 .select('*')
-                .eq('class_id', classId)
-                .eq('trimester', selectedTrimester)
-            gradesData = seededGrades || []
-        } catch (e) {
-            console.error('Auto-seed failed:', e)
+                .eq('id', params.classId)
+                .eq('teacher_id', user.id)
+                .single()
+
+            if (classError || !classDetails) {
+                setLoading(false)
+                return
+            }
+
+            setClassData(classDetails)
+
+            // Auto-seed default evaluations (Comportement) if missing
+            await seedDefaultEvaluations(params.classId)
+
+            // Fetch students
+            const { data: studentsData } = await supabase
+                .from('students')
+                .select('*')
+                .eq('class_id', params.classId)
+                .order('last_name')
+
+            setStudents(studentsData || [])
+
+            // Fetch evaluations for current trimester
+            const { data: evalsData } = await supabase
+                .from('evaluations')
+                .select('*')
+                .eq('class_id', params.classId)
+                .eq('trimester', currentTrimester)
+                .order('date')
+
+            setEvaluations(evalsData || [])
+
+            // Fetch all grades for these evaluations
+            if (evalsData && evalsData.length > 0) {
+                const evalIds = evalsData.map(e => e.id)
+                const { data: gradesData } = await supabase
+                    .from('grades')
+                    .select('*')
+                    .in('evaluation_id', evalIds)
+
+                setGrades(gradesData || [])
+            } else {
+                setGrades([])
+            }
+
+            setLoading(false)
         }
+
+        fetchData()
+    }, [params.classId, currentTrimester, supabase, router])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+        )
     }
 
-    // Deduplicate evaluations (by title)
-    const evalMap = new Map<string, { title: string; max_value: number; date: string }>()
-    gradesData?.forEach(g => {
-
-        if (!evalMap.has(g.evaluation_title)) {
-            evalMap.set(g.evaluation_title, {
-                title: g.evaluation_title,
-                max_value: g.max_value,
-                date: g.evaluation_date,
-            })
-        }
-    })
-    const evaluations = Array.from(evalMap.values())
+    if (!classData) return notFound()
 
     return (
-        <div className="min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 md:pl-[220px] xl:pl-[260px] font-sans transition-all">
-            <div className="max-w-md md:max-w-none md:container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12 space-y-6">
-                <BackButton />
-
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-gray-100">
-                    <div className="flex items-center gap-4">
-                        <Link
-                            href={`/classes/${classId}/students`}
-                            className="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm shrink-0"
-                        >
-                            <ArrowLeft size={20} />
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                                Carnet de Notes
-                            </h1>
-                            <p className="text-gray-500 text-sm mt-0.5">
-                                {currentClass.class_name ?? currentClass.name} â€” GÃ©rez les Ã©valuations et notes
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        {/* Trimester Selector */}
-                        <div className="bg-white border border-gray-200 rounded-xl p-1 flex shadow-sm">
-                            {[1, 2, 3].map((tri) => (
-                                <Link
-                                    key={tri}
-                                    href={`/classes/${classId}/grades?t=${tri}`}
-                                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${selectedTrimester === tri
-                                        ? 'bg-blue-50 text-blue-700'
-                                        : 'text-gray-500 hover:text-gray-700'
-                                        }`}
-                                >
-                                    Trim. {tri}
-                                </Link>
-                            ))}
-                        </div>
-
-                        {/* + Nouvelle Ã‰valuation button */}
-                        <div className="flex items-center gap-3">
-                            <ExportButton classId={classId} trimester={selectedTrimester} />
-                            <AddEvaluationModal classId={classId} trimester={selectedTrimester} />
-                        </div>
-                    </div>
+        <div className={`max-w-[1400px] mx-auto space-y-6 ${rtl ? 'text-right' : ''}`}>
+            <BackButton />
+            {/* Header */}
+            <div className={`flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-gray-100 ${rtl ? 'md:flex-row-reverse' : ''}`}>
+                <div className="space-y-1">
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        {t('grades_title')} - {classData.name}
+                    </h1>
+                    <p className="text-gray-500">
+                        {t('grades_desc')} ({classData.level})
+                    </p>
                 </div>
 
-                {/* Grades Table */}
-                <GradesTable
-                    students={students || []}
-                    grades={gradesData || []}
-                    evaluations={evaluations}
-                    classId={classId}
-                    trimester={selectedTrimester}
-                />
+                <div className={`flex flex-wrap items-center gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
+                    {/* Trimester Selector */}
+                    <div className={`flex bg-gray-100 p-1 rounded-2xl ${rtl ? 'flex-row-reverse' : ''}`}>
+                        {[1, 2, 3].map((tri) => (
+                            <button
+                                key={tri}
+                                onClick={() => setCurrentTrimester(tri)}
+                                className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all ${currentTrimester === tri
+                                        ? 'bg-white text-blue-600 shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                {t('grades_trimester')} {tri}
+                            </button>
+                        ))}
+                    </div>
 
-
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className={`bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-2xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}
+                    >
+                        <Plus className="w-4 h-4" />
+                        {t('grades_new_eval')}
+                    </button>
+                </div>
             </div>
 
-            <Navigation />
+            {/* Grades Table */}
+            <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+                <GradesTable
+                    students={students}
+                    evaluations={evaluations}
+                    initialGrades={grades}
+                    trimester={currentTrimester}
+                />
+            </div>
+
+            {/* Add Evaluation Modal */}
+            <AddEvaluationModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                classId={params.classId}
+                trimester={currentTrimester}
+                onSuccess={() => {
+                    setIsModalOpen(false)
+                    router.refresh()
+                }}
+            />
         </div>
     )
 }
-

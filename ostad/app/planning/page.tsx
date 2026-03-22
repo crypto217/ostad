@@ -3,9 +3,35 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Navigation from '@/components/layout/Navigation'
 import WeekGrid from '@/components/planning/WeekGrid'
+import { translations, Language } from '@/lib/i18n/translations'
 
 export const metadata = {
     title: 'Planning | Ostad',
+}
+
+async function getProfileLanguage() {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() { return cookieStore.getAll() },
+                setAll() { },
+            },
+        }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return "fr";
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("preferred_language")
+        .eq("id", user.id)
+        .single();
+
+    return (profile?.preferred_language as Language) || "fr";
 }
 
 export default async function PlanningPage() {
@@ -23,6 +49,9 @@ export default async function PlanningPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
+
+    const language = await getProfileLanguage()
+    const rtl = language === 'ar'
 
     // Fetch classes
     const { data: classes } = await supabase
@@ -56,9 +85,9 @@ export default async function PlanningPage() {
         .lte('scheduled_time', saturday.toISOString())
 
     return (
-        <div className="min-h-screen bg-[#F9F9F6]">
+        <div className={`min-h-screen bg-[#F9F9F6] font-sans transition-all ${rtl ? 'rtl' : ''}`}>
             <Navigation />
-            <main className="md:pl-[220px] xl:pl-[260px] pb-24 md:pb-0">
+            <main className={`pb-24 md:pb-0 transition-all ${rtl ? 'md:pr-[220px] xl:pr-[260px] md:pl-0' : 'md:pl-[220px] xl:pl-[260px]'}`}>
                 <div className="max-w-7xl mx-auto px-4 pt-10 md:p-8 lg:p-12">
                     <WeekGrid
                         weeklySchedules={weeklySchedules || []}

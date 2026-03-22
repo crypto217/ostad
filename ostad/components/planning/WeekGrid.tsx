@@ -4,29 +4,13 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import SessionDetailModal from './SessionDetailModal'
 import AddSlotModal from './AddSlotModal'
-
-const DAYS = [
-    { id: 0, short: 'Dim', name: 'Dimanche' },
-    { id: 1, short: 'Lun', name: 'Lundi' },
-    { id: 2, short: 'Mar', name: 'Mardi' },
-    { id: 3, short: 'Mer', name: 'Mercredi' },
-    { id: 4, short: 'Jeu', name: 'Jeudi' },
-    { id: 5, short: 'Ven', name: 'Vendredi' },
-    { id: 6, short: 'Sam', name: 'Samedi' },
-]
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 const STATUS_ICONS: Record<string, string> = {
     planned: '🟡',
     in_progress: '🟢',
     done: '✅',
     cancelled: '❌',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-    planned: 'Planifié',
-    in_progress: 'En cours',
-    done: 'Terminé',
-    cancelled: 'Annulé',
 }
 
 function hexToRgb(hex: string) {
@@ -37,10 +21,29 @@ function hexToRgb(hex: string) {
 }
 
 export default function WeekGrid({ weeklySchedules, courseSessions, classes, weekStart }: any) {
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
     const [viewMode, setViewMode] = useState<'this_week' | 'template'>('this_week')
     const [selectedSlot, setSelectedSlot] = useState<any>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+
+    const DAYS = [
+        { id: 0, short: t('plan_day_sun').substring(0, 3), name: t('plan_day_sun') },
+        { id: 1, short: t('plan_day_mon').substring(0, 3), name: t('plan_day_mon') },
+        { id: 2, short: t('plan_day_tue').substring(0, 3), name: t('plan_day_tue') },
+        { id: 3, short: t('plan_day_wed').substring(0, 3), name: t('plan_day_wed') },
+        { id: 4, short: t('plan_day_thu').substring(0, 3), name: t('plan_day_thu') },
+        { id: 5, short: t('plan_day_fri').substring(0, 3), name: t('plan_day_fri') },
+        { id: 6, short: t('plan_day_sat').substring(0, 3), name: t('plan_day_sat') },
+    ]
+
+    const STATUS_LABELS: Record<string, string> = {
+        planned: t('plan_status_scheduled'),
+        in_progress: t('dash_in_progress'),
+        done: t('plan_status_completed'),
+        cancelled: t('plan_status_cancelled'),
+    }
 
     const today = new Date()
     const currentDayId = today.getDay()
@@ -53,29 +56,30 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
     }
 
     // Build week date range label
+    const locale = language === 'ar' ? 'ar-DZ' : language === 'en' ? 'en-US' : 'fr-FR'
     const weekStartDate = new Date(weekStart)
     const weekEndDate = new Date(weekStart)
     weekEndDate.setDate(weekEndDate.getDate() + 6)
-    const weekRangeLabel = `${weekStartDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — ${weekEndDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    const weekRangeLabel = `${weekStartDate.toLocaleDateString(locale, { day: 'numeric', month: 'long' })} — ${weekEndDate.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}`
 
     return (
-        <div className="space-y-6">
+        <div className={`space-y-6 ${rtl ? 'text-right' : ''}`}>
 
             {/* ── Header ─────────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 ${rtl ? 'sm:flex-row-reverse' : ''}`}>
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Planning</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{t('plan_title')}</h1>
                     {viewMode === 'this_week' && (
                         <p className="text-sm font-medium text-gray-400 mt-1">Semaine du {weekRangeLabel}</p>
                     )}
                     {viewMode === 'template' && (
-                        <p className="text-sm font-medium text-gray-400 mt-1">Grille d'emploi du temps type</p>
+                        <p className="text-sm font-medium text-gray-400 mt-1">{t('plan_empty_desc')}</p>
                     )}
                 </div>
 
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className={`flex items-center gap-3 w-full sm:w-auto ${rtl ? 'flex-row-reverse' : ''}`}>
                     {/* View Switcher */}
-                    <div className="flex bg-white rounded-2xl p-1 border border-gray-100 shadow-sm flex-1 sm:flex-none">
+                    <div className={`flex bg-white rounded-2xl p-1 border border-gray-100 shadow-sm flex-1 sm:flex-none ${rtl ? 'flex-row-reverse' : ''}`}>
                         <button
                             onClick={() => setViewMode('this_week')}
                             className={`flex-1 sm:px-5 py-2 text-sm font-bold rounded-xl transition-all ${viewMode === 'this_week'
@@ -83,7 +87,7 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                 : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            Cette semaine
+                            {language === 'ar' ? 'هذا الأسبوع' : language === 'en' ? 'This week' : 'Cette semaine'}
                         </button>
                         <button
                             onClick={() => setViewMode('template')}
@@ -92,23 +96,23 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                 : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            Grille type
+                            {language === 'ar' ? 'الجدول النموذجي' : language === 'en' ? 'Typical grid' : 'Grille type'}
                         </button>
                     </div>
 
                     {/* Add Button — desktop */}
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold py-2.5 px-5 rounded-2xl transition-all shadow-sm whitespace-nowrap"
+                        className={`hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold py-2.5 px-5 rounded-2xl transition-all shadow-sm whitespace-nowrap ${rtl ? 'flex-row-reverse' : ''}`}
                     >
                         <Plus size={18} className="stroke-[3]" />
-                        Ajouter un créneau
+                        {t('plan_add_slot')}
                     </button>
                 </div>
             </div>
 
             {/* ── Desktop Grid (7 columns) ────────────────────── */}
-            <div className="hidden lg:grid grid-cols-7 gap-3">
+            <div className={`hidden lg:grid grid-cols-7 gap-3 ${rtl ? 'direction-rtl' : ''}`} style={{ direction: rtl ? 'rtl' : 'ltr' }}>
                 {DAYS.map(day => {
                     const isToday = day.id === currentDayId && viewMode === 'this_week'
                     const columnDate = new Date(weekStart)
@@ -143,7 +147,7 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                     onClick={() => setIsAddModalOpen(true)}
                                     className="min-h-[80px] flex items-center justify-center bg-white border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-green-300 hover:bg-green-50 transition-all group"
                                 >
-                                    <span className="text-xs font-medium text-gray-300 group-hover:text-green-400 transition-colors">Libre</span>
+                                    <span className="text-xs font-medium text-gray-300 group-hover:text-green-400 transition-colors">{language === 'ar' ? 'فارغ' : language === 'en' ? 'Free' : 'Libre'}</span>
                                 </div>
                             ) : (
                                 daySchedules.map(schedule => {
@@ -172,12 +176,12 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (confirm("Supprimer ce créneau de la grille ? Cela n'affectera pas les séances déjà planifiées.")) {
+                                                    if (confirm(t('plan_confirm_delete'))) {
                                                         import('@/app/actions').then(m => m.deleteWeeklySlot(schedule.id));
                                                     }
                                                 }}
-                                                className="absolute top-2 right-2 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200"
-                                                title="Supprimer"
+                                                className={`absolute top-2 ${rtl ? 'left-2' : 'right-2'} w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200`}
+                                                title={t('common_delete')}
                                             >
                                                 ✕
                                             </button>
@@ -185,7 +189,7 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                             <div onClick={() => handleSlotClick(schedule, session, columnDate)} className="p-3 flex flex-col gap-1.5">
                                                 {/* Class badge */}
                                                 <span
-                                                    className="self-start text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                                    className={`self-start text-[10px] font-bold px-2 py-0.5 rounded-full ${rtl ? 'mr-0 ml-auto' : ''}`}
                                                     style={{
                                                         backgroundColor: `rgba(${rgb}, 0.12)`,
                                                         color: color,
@@ -223,10 +227,10 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                 {/* Add Button — mobile */}
                 <button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold py-3.5 px-6 rounded-2xl transition-all shadow-sm"
+                    className={`w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 active:scale-95 text-white font-bold py-3.5 px-6 rounded-2xl transition-all shadow-sm ${rtl ? 'flex-row-reverse' : ''}`}
                 >
                     <Plus size={18} className="stroke-[3]" />
-                    Ajouter un créneau
+                    {t('plan_add_slot')}
                 </button>
 
                 {DAYS.map(day => {
@@ -243,20 +247,20 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                             className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${isToday ? 'border-green-200 ring-2 ring-green-100' : 'border-gray-100'}`}
                         >
                             {/* Section header */}
-                            <div className={`px-5 py-3 flex items-center justify-between border-b ${isToday ? 'bg-green-50 border-green-100' : 'bg-gray-50/60 border-gray-100'}`}>
-                                <div className="flex items-center gap-2">
+                            <div className={`px-5 py-3 flex items-center justify-between border-b ${isToday ? 'bg-green-50 border-green-100' : 'bg-gray-50/60 border-gray-100'} ${rtl ? 'flex-row-reverse' : ''}`}>
+                                <div className={`flex items-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
                                     <h3 className={`font-bold text-base ${isToday ? 'text-green-700' : 'text-gray-800'}`}>
                                         {day.name}
                                     </h3>
                                     {isToday && (
                                         <span className="text-[10px] font-bold bg-green-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                            Aujourd'hui
+                                            {language === 'ar' ? 'اليوم' : language === 'en' ? 'Today' : "Aujourd'hui"}
                                         </span>
                                     )}
                                 </div>
                                 {viewMode === 'this_week' && (
                                     <span className="text-sm font-medium text-gray-400">
-                                        {columnDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                                        {columnDate.toLocaleDateString(locale, { day: 'numeric', month: 'long' })}
                                     </span>
                                 )}
                             </div>
@@ -280,29 +284,29 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                                     return (
                                         <div
                                             key={schedule.id}
-                                            className="group relative flex items-stretch gap-0 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                                            className={`group relative flex items-stretch gap-0 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors ${rtl ? 'flex-row-reverse' : ''}`}
                                         >
-                                            {/* Left color strip */}
+                                            {/* Side color strip */}
                                             <div className="w-1 shrink-0" style={{ backgroundColor: color }} />
 
                                             {/* Delete Button (Hover Only) */}
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (confirm("Supprimer ce créneau de la grille ? Cela n'affectera pas les séances déjà planifiées.")) {
+                                                    if (confirm(t('plan_confirm_delete'))) {
                                                         import('@/app/actions').then(m => m.deleteWeeklySlot(schedule.id));
                                                     }
                                                 }}
-                                                className="absolute top-2 right-2 w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200"
-                                                title="Supprimer"
+                                                className={`absolute top-2 ${rtl ? 'left-2' : 'right-2'} w-5 h-5 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-200`}
+                                                title={t('common_delete')}
                                             >
                                                 ✕
                                             </button>
 
-                                            <div onClick={() => handleSlotClick(schedule, session, columnDate)} className="flex items-center justify-between flex-1 px-4 py-3.5 gap-3">
+                                            <div onClick={() => handleSlotClick(schedule, session, columnDate)} className={`flex items-center justify-between flex-1 px-4 py-3.5 gap-3 ${rtl ? 'flex-row-reverse text-right' : ''}`}>
                                                 <div className="flex-1 min-w-0">
                                                     <span
-                                                        className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-1"
+                                                        className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-1 ${rtl ? 'mr-0 ml-auto' : ''}`}
                                                         style={{
                                                             backgroundColor: `rgba(${rgb}, 0.12)`,
                                                             color: color,
@@ -334,8 +338,8 @@ export default function WeekGrid({ weeklySchedules, courseSessions, classes, wee
                 {sortedSchedules.length === 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
                         <p className="text-4xl mb-3">📅</p>
-                        <h3 className="font-bold text-gray-800 text-lg mb-1">Aucun créneau</h3>
-                        <p className="text-sm text-gray-400">Commencez par ajouter un créneau à votre planning.</p>
+                        <h3 className="font-bold text-gray-800 text-lg mb-1">{t('plan_empty_title')}</h3>
+                        <p className="text-sm text-gray-400">{t('plan_empty_desc')}</p>
                     </div>
                 )}
             </div>

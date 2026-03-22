@@ -4,22 +4,22 @@ import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getCivility, getDateLocale, isRTL } from '@/lib/i18n/civility'
 import LanguageSwitcher from './LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface HeaderProps {
     profile: {
         full_name: string
         gender?: 'male' | 'female' | null
-        preferred_language?: 'fr' | 'ar' | 'en' | null
     }
 }
 
 export default function Header({ profile }: HeaderProps) {
+    const { language, t } = useLanguage()
     const [dateStr, setDateStr] = useState('')
-    const lang = profile.preferred_language || 'fr'
-    const rtl = isRTL(lang)
+    const rtl = isRTL(language)
 
     useEffect(() => {
-        const locale = getDateLocale(lang)
+        const locale = getDateLocale(language)
         const formatter = new Intl.DateTimeFormat(locale, {
             weekday: 'long',
             day: 'numeric',
@@ -28,11 +28,11 @@ export default function Header({ profile }: HeaderProps) {
 
         let formattedDate = formatter.format(new Date())
         // Capitalize the first letter for French
-        if (lang === 'fr') {
+        if (language === 'fr') {
             formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
         }
         setDateStr(formattedDate)
-    }, [lang])
+    }, [language])
 
     const firstName = profile.full_name?.split(' ')[0] || ''
 
@@ -43,7 +43,7 @@ export default function Header({ profile }: HeaderProps) {
         >
             <div className={rtl ? 'text-right' : ''}>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                    {getCivility(profile.full_name, profile.gender || null, lang)}
+                    {getCivility(profile.full_name, profile.gender || null, language)}
                 </h1>
                 <p className="text-sm font-medium text-gray-500 capitalize">{dateStr}</p>
             </div>
@@ -67,7 +67,7 @@ export default function Header({ profile }: HeaderProps) {
                 </div>
 
                 <div className="shrink-0">
-                    <LanguageSwitcher currentLanguage={lang as any} />
+                    <LanguageSwitcher />
                 </div>
 
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0 border-2 border-white ring-2 ring-gray-100 cursor-pointer hover:scale-105 transition-transform">

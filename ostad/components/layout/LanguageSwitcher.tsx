@@ -1,27 +1,19 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { updateLanguage } from '@/app/actions'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
-interface LanguageSwitcherProps {
-    currentLanguage: 'fr' | 'ar' | 'en'
-}
-
-export default function LanguageSwitcher({ currentLanguage }: LanguageSwitcherProps) {
-    const router = useRouter()
+export default function LanguageSwitcher() {
+    const { language, setLanguage } = useLanguage()
     const [isPending, setIsPending] = useState(false)
     const [tempLang, setTempLang] = useState<string | null>(null)
 
     const handleLanguageChange = async (lang: 'fr' | 'ar' | 'en') => {
-        if (lang === currentLanguage) return
+        if (lang === language) return
 
         setIsPending(true)
         setTempLang(lang)
         try {
-            await updateLanguage(lang)
-            router.refresh()
+            await setLanguage(lang)
         } catch (error) {
             console.error('Failed to change language:', error)
         } finally {
@@ -39,7 +31,7 @@ export default function LanguageSwitcher({ currentLanguage }: LanguageSwitcherPr
     return (
         <div className="bg-gray-100 rounded-xl p-1 flex gap-1 items-center">
             {languages.map((lang) => {
-                const isActive = (tempLang || currentLanguage) === lang.code
+                const isActive = (tempLang || language) === lang.code
                 return (
                     <button
                         key={lang.code}

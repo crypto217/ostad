@@ -1,257 +1,249 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Trash2 } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { Trash2, AlertCircle, Loader2, Save } from 'lucide-react'
 import { updateGrade, deleteEvaluation } from '@/app/actions'
+import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-type Student = {
+interface Student {
     id: string
     first_name: string
     last_name: string
 }
 
-type Grade = {
+interface Evaluation {
     id: string
-    student_id: string
-    evaluation_title: string
-    grade_value: number | null
-    max_value: number
-}
-
-type Evaluation = {
     title: string
     max_value: number
     date: string
-}
-
-// Fixed column order: Devoir 1, Devoir 2, Examen, Comportement (always last before Moyenne)
-const COLUMN_ORDER = ['Devoir 1', 'Devoir 2', 'Examen', 'Comportement']
-
-function sortEvaluations(evaluations: Evaluation[]): Evaluation[] {
-    return [...evaluations].sort((a, b) => {
-        const ia = COLUMN_ORDER.indexOf(a.title)
-        const ib = COLUMN_ORDER.indexOf(b.title)
-        // Known columns get their index; unknown columns go after
-        const posA = ia === -1 ? COLUMN_ORDER.length : ia
-        const posB = ib === -1 ? COLUMN_ORDER.length : ib
-        if (posA !== posB) return posA - posB
-        return a.title.localeCompare(b.title)
-    })
-}
-
-export default function GradesTable({
-    students,
-    grades,
-    evaluations,
-    classId,
-    trimester,
-}: {
-    students: Student[]
-    grades: Grade[]
-    evaluations: Evaluation[]
-    classId: string
     trimester: number
-}) {
+}
+
+interface Grade {
+    student_id: string
+    evaluation_id: string
+    value: number
+}
+
+interface GradesTableProps {
+    students: Student[]
+    evaluations: Evaluation[]
+    initialGrades: Grade[]
+    trimester: number
+}
+
+export default function GradesTable({ students, evaluations, initialGrades, trimester }: GradesTableProps) {
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
     const router = useRouter()
-    const [localGrades, setLocalGrades] = useState<Grade[]>(grades)
-    const [savingId, setSavingId] = useState<string | null>(null)
-    const [deletingEval, setDeletingEval] = useState<string | null>(null)
+    const [grades, setGrades] = useState<Grade[]>(initialGrades)
+    const [editing, setEditing] = useState<{ studentId: string, evalId: string } | null>(null)
+    const [isDeleting, setIsDeleting] = useState<string | null>(null)
+    const [updating, setUpdating] = useState<{ studentId: string, evalId: string } | null>(null)
 
-    // Sort students alphabetically
-    const sortedStudents = [...students].sort((a, b) => a.last_name.localeCompare(b.last_name))
+    // Memoize the sorted evaluations to ensure fixed order
+    const sortedEvaluations = useMemo(() => {
+        return [...evaluations].sort((a, b) => {
+            // "Comportement" always before Average (which is handled separately)
+            if (a.title === 'Comportement') return -1;
+            if (b.title === 'Comportement') return 1;
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+    }, [evaluations]);
 
-    // Sort evaluations in the fixed order
-    const sortedEvaluations = sortEvaluations(evaluations)
-
-    const handleGradeChange = useCallback((gradeId: string, newValueStr: string, maxValue: number) => {
-        let numericValue: number | null = null
-
-        if (newValueStr.trim() !== '') {
-            numericValue = parseFloat(newValueStr)
-            if (isNaN(numericValue)) return
-            if (numericValue < 0) numericValue = 0
-            if (numericValue > maxValue) numericValue = maxValue
-        }
-
-        // Optimistic update
-        setLocalGrades(prev => prev.map(g =>
-            g.id === gradeId ? { ...g, grade_value: numericValue } : g
-        ))
-
-        setSavingId(gradeId)
-        setTimeout(async () => {
-            try {
-                await updateGrade(gradeId, numericValue)
-            } catch (error) {
-                console.error('Failed to save grade', error)
-            } finally {
-                setSavingId(null)
-            }
-        }, 800)
-    }, [])
-
-    const handleDeleteEvaluation = useCallback(async (evalTitle: string) => {
-        const confirmed = window.confirm(
-            `Supprimer l'évaluation "${evalTitle}" pour tous les élèves ?\n\nCette action est irréversible.`
-        )
-        if (!confirmed) return
-
-        setDeletingEval(evalTitle)
-        try {
-            await deleteEvaluation(classId, evalTitle, trimester)
-            router.refresh()
-        } catch (error) {
-            console.error('Failed to delete evaluation', error)
-            alert("Erreur lors de la suppression de l'évaluation.")
-        } finally {
-            setDeletingEval(null)
-        }
-    }, [classId, trimester, router])
-
-    const getGradeColor = (value: number | null, max_value: number) => {
-        if (value === null) return 'text-gray-400'
-        const normalized = (value / max_value) * 20
-        if (normalized < 10) return 'text-red-600 font-semibold'
-        if (normalized >= 10 && normalized < 15) return 'text-orange-500 font-semibold'
-        return 'text-green-600 font-semibold'
+    const getGrade = (studentId: string, evalId: string) => {
+        return grades.find(g => g.student_id === studentId && g.evaluation_id === evalId)?.value
     }
 
     const calculateAverage = (studentId: string) => {
-        const studentGrades = localGrades.filter(g => g.student_id === studentId && g.grade_value !== null)
-        if (studentGrades.length === 0) return null
+        const studentGrades = sortedEvaluations
+            .map(e => {
+                const grade = getGrade(studentId, e.id)
+                if (grade === undefined) return null
+                return (grade / e.max_value) * 10
+            })
+            .filter((g): g is number => g !== null)
 
-        let sum = 0
-        let totalMax = 0
-        studentGrades.forEach(g => {
-            sum += g.grade_value!
-            totalMax += g.max_value
-        })
-
-        if (totalMax === 0) return null
-        return (sum / totalMax) * 20
+        if (studentGrades.length === 0) return '-'
+        const avg = studentGrades.reduce((a, b) => a + b, 0) / studentGrades.length
+        return avg.toFixed(2)
     }
 
-    if (evaluations.length === 0) {
+    const handleGradeUpdate = async (studentId: string, evalId: string, value: string) => {
+        const numValue = parseFloat(value)
+        const evaluation = evaluations.find(e => e.id === evalId)
+
+        if (isNaN(numValue) || numValue < 0 || (evaluation && numValue > evaluation.max_value)) {
+            setEditing(null)
+            return
+        }
+
+        setUpdating({ studentId, evalId })
+        try {
+            await updateGrade(studentId, evalId, numValue)
+            const newGrades = [...grades]
+            const index = newGrades.findIndex(g => g.student_id === studentId && g.evaluation_id === evalId)
+            if (index > -1) {
+                newGrades[index] = { ...newGrades[index], value: numValue }
+            } else {
+                newGrades.push({ student_id: studentId, evaluation_id: evalId, value: numValue })
+            }
+            setGrades(newGrades)
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setUpdating(null)
+            setEditing(null)
+        }
+    }
+
+    const handleDeleteEval = async (evaluation: Evaluation) => {
+        if (!confirm(t('grades_delete_confirm').replace('{title}', evaluation.title === 'Comportement' ? t('grades_eval_comportement') : evaluation.title))) return
+
+        setIsDeleting(evaluation.id)
+        try {
+            await deleteEvaluation(evaluation.id)
+            router.refresh()
+        } catch (error) {
+            alert(t('grades_delete_error'))
+            console.error(error)
+        } finally {
+            setIsDeleting(null)
+        }
+    }
+
+    const getGradeColor = (value: number | undefined, maxValue: number) => {
+        if (value === undefined) return 'text-gray-400'
+        const percentage = (value / maxValue) * 100
+        if (percentage >= 70) return 'text-green-600 font-bold'
+        if (percentage >= 50) return 'text-blue-600 font-medium'
+        if (percentage >= 35) return 'text-amber-600 font-medium'
+        return 'text-red-600 font-bold'
+    }
+
+    if (students.length === 0) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm p-8 text-center border border-gray-100">
-                <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-serif">A+</span>
+            <div className={`p-12 text-center ${rtl ? 'text-right' : ''}`}>
+                <div className="bg-gray-50 rounded-3xl p-8 max-w-md mx-auto">
+                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('att_not_found')}</h3>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune évaluation</h3>
-                <p className="text-gray-500 max-w-sm mx-auto">
-                    Créez votre première évaluation pour commencer à saisir les notes de vos élèves.
-                </p>
+            </div>
+        )
+    }
+
+    if (sortedEvaluations.length === 0) {
+        return (
+            <div className={`p-12 text-center ${rtl ? 'text-right' : ''}`}>
+                <div className="bg-gray-50 rounded-3xl p-8 max-w-md mx-auto border-2 border-dashed border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('grades_no_eval')}</h3>
+                    <p className="text-gray-500">{t('grades_no_eval_desc')}</p>
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="relative">
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                <table className={`w-full text-sm border-collapse ${rtl ? 'text-right' : 'text-left'}`}>
+                    <thead>
                         <tr>
-                            <th scope="col" className="px-6 py-4 font-semibold sticky left-0 bg-gray-50 z-10">
-                                Élève
+                            <th className={`sticky left-0 ${rtl ? 'right-0 left-auto' : ''} z-20 bg-gray-50/80 backdrop-blur-sm px-6 py-4 font-bold text-gray-700 min-w-[200px] border-b border-gray-100 shadow-[2px_0_5px_rgba(0,0,0,0.02)]`}>
+                                {t('grades_student')}
                             </th>
-                            {sortedEvaluations.map((evalItem, idx) => {
-                                const isComportement = evalItem.title === 'Comportement'
-                                return (
-                                    <th
-                                        key={idx}
-                                        scope="col"
-                                        className={`px-4 py-4 font-semibold text-center min-w-[130px] ${isComportement ? 'bg-purple-50' : ''}`}
+                            {sortedEvaluations.map((evaluation) => (
+                                <th key={evaluation.id} className="px-6 py-4 font-semibold text-gray-600 border-b border-gray-100 text-center min-w-[120px] group relative bg-white">
+                                    <div className="flex flex-col items-center">
+                                        <span className="truncate max-w-[100px]" title={evaluation.title}>
+                                            {evaluation.title === 'Comportement' ? t('grades_eval_comportement') : evaluation.title}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-normal">
+                                            /{evaluation.max_value} • {new Date(evaluation.date).toLocaleDateString(language === 'ar' ? 'ar-DZ' : 'fr-FR', { day: 'numeric', month: 'short' })}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeleteEval(evaluation)}
+                                        disabled={isDeleting === evaluation.id}
+                                        className="absolute top-1/2 -translate-y-1/2 right-1 opacity-0 group-hover:opacity-100 p-1.5 text-red-400 hover:text-red-600 transition-all rounded-lg hover:bg-red-50"
                                     >
-                                        <div className="flex items-center justify-center gap-1.5 group">
-                                            <div className="flex flex-col items-center">
-                                                <span className="truncate max-w-[90px]" title={evalItem.title}>
-                                                    {isComportement ? '⭐ ' : ''}{evalItem.title}
-                                                </span>
-                                                <span className="text-[10px] text-gray-400 font-normal mt-0.5">
-                                                    /{evalItem.max_value} • {new Date(evalItem.date).toLocaleDateString('fr-FR')}
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() => handleDeleteEvaluation(evalItem.title)}
-                                                disabled={deletingEval === evalItem.title}
-                                                title={`Supprimer "${evalItem.title}"`}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 shrink-0"
-                                            >
-                                                {deletingEval === evalItem.title ? (
-                                                    <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
-                                                ) : (
-                                                    <Trash2 size={13} />
-                                                )}
-                                            </button>
-                                        </div>
-                                    </th>
-                                )
-                            })}
-                            <th scope="col" className="px-6 py-4 font-semibold text-center border-l bg-gray-50">
-                                Moyenne /20
+                                        {isDeleting === evaluation.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                    </button>
+                                </th>
+                            ))}
+                            <th className={`sticky right-0 ${rtl ? 'left-0 right-auto' : ''} z-20 bg-blue-50/80 backdrop-blur-sm px-6 py-4 font-bold text-blue-800 text-center min-w-[100px] border-b border-blue-100 shadow-[-2px_0_5px_rgba(0,0,0,0.02)]`}>
+                                {t('grades_average')} /10
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {sortedStudents.map((student) => {
-                            const avgValue = calculateAverage(student.id)
-
+                    <tbody className="divide-y divide-gray-50">
+                        {students.map((student) => {
+                            const avg = calculateAverage(student.id)
                             return (
-                                <tr key={student.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                        {student.last_name.toUpperCase()}{' '}
-                                        <span className="capitalize font-normal text-gray-600">{student.first_name}</span>
+                                <tr key={student.id} className="hover:bg-gray-50/50 transition-colors group">
+                                    <td className={`sticky left-0 ${rtl ? 'right-0 left-auto' : ''} z-20 bg-white/80 group-hover:bg-gray-50/80 backdrop-blur-sm px-6 py-4 font-semibold text-gray-900 border-r border-gray-50 shadow-[2px_0_5px_rgba(0,0,0,0.02)]`}>
+                                        <div className={`flex items-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs">
+                                                {student.first_name[0]}{student.last_name[0]}
+                                            </div>
+                                            <span className="truncate">{student.last_name} {student.first_name}</span>
+                                        </div>
                                     </td>
-
-                                    {sortedEvaluations.map((evalItem, idx) => {
-                                        const isComportement = evalItem.title === 'Comportement'
-                                        const gradeEntry = localGrades.find(
-                                            g => g.student_id === student.id && g.evaluation_title === evalItem.title
-                                        )
+                                    {sortedEvaluations.map((evaluation) => {
+                                        const grade = getGrade(student.id, evaluation.id)
+                                        const isEditing = editing?.studentId === student.id && editing?.evalId === evaluation.id
+                                        const isUpdating = updating?.studentId === student.id && updating?.evalId === evaluation.id
 
                                         return (
-                                            <td
-                                                key={idx}
-                                                className={`px-4 py-2 text-center ${isComportement ? 'bg-purple-50/40' : ''}`}
-                                            >
-                                                {gradeEntry ? (
-                                                    <div className="relative inline-block w-20">
-                                                        <input
-                                                            type="number"
-                                                            step="0.25"
-                                                            min="0"
-                                                            max={evalItem.max_value}
-                                                            value={gradeEntry.grade_value === null ? '' : gradeEntry.grade_value}
-                                                            onChange={(e) => handleGradeChange(gradeEntry.id, e.target.value, gradeEntry.max_value)}
-                                                            className={`w-full text-center px-2 py-1.5 border border-transparent hover:border-gray-200 focus:border-blue-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-transparent transition-all ${getGradeColor(gradeEntry.grade_value, gradeEntry.max_value)}`}
-                                                            placeholder="—"
-                                                        />
-                                                        {savingId === gradeEntry.id && (
-                                                            <span className="absolute right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" title="Sauvegarde en cours..." />
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-gray-300">—</span>
-                                                )}
+                                            <td key={evaluation.id} className="px-3 py-4 text-center">
+                                                <div className="flex justify-center">
+                                                    {isEditing ? (
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number"
+                                                                step="0.25"
+                                                                min="0"
+                                                                max={evaluation.max_value}
+                                                                defaultValue={grade}
+                                                                autoFocus
+                                                                className={`w-16 h-10 text-center p-1 bg-white border-2 border-blue-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 font-bold transition-all ${rtl ? 'text-right' : ''}`}
+                                                                onBlur={(e) => handleGradeUpdate(student.id, evaluation.id, e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleGradeUpdate(student.id, evaluation.id, e.currentTarget.value)
+                                                                    if (e.key === 'Escape') setEditing(null)
+                                                                }}
+                                                            />
+                                                            {isUpdating && (
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-white/50 rounded-xl">
+                                                                    <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => setEditing({ studentId: student.id, evalId: evaluation.id })}
+                                                            className={`min-w-[60px] h-10 px-2 rounded-xl transition-all flex items-center justify-center font-bold text-base hover:bg-white hover:shadow-sm hover:scale-110 active:scale-95 ${getGradeColor(grade, evaluation.max_value)}`}
+                                                        >
+                                                            {grade !== undefined ? grade : '-'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
                                         )
                                     })}
-
-                                    <td className={`px-6 py-4 text-center border-l font-bold bg-gray-50/30 ${getGradeColor(avgValue, 20)}`}>
-                                        {avgValue !== null ? avgValue.toFixed(2) : '—'}
+                                    <td className={`sticky right-0 ${rtl ? 'left-0 right-auto' : ''} z-20 bg-blue-50/50 group-hover:bg-blue-100/50 backdrop-blur-sm px-6 py-4 text-center border-l border-blue-100 shadow-[-2px_0_5px_rgba(0,0,0,0.02)]`}>
+                                        <span className={`text-base font-black ${avg === '-' ? 'text-gray-300' :
+                                                parseFloat(avg) >= 7 ? 'text-green-700' :
+                                                    parseFloat(avg) >= 5 ? 'text-blue-700' :
+                                                        'text-red-700'
+                                            }`}>
+                                            {avg}
+                                        </span>
                                     </td>
                                 </tr>
                             )
                         })}
-
-                        {sortedStudents.length === 0 && (
-                            <tr>
-                                <td colSpan={sortedEvaluations.length + 2} className="px-6 py-8 text-center text-gray-500">
-                                    Aucun élève dans cette classe.
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>

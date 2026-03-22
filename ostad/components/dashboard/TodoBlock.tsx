@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Circle } from 'lucide-react'
 import { createTodo, toggleTodo } from '@/app/actions'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Todo {
     id: string
@@ -15,6 +16,7 @@ interface TodoBlockProps {
 }
 
 export default function TodoBlock({ initialTodos }: TodoBlockProps) {
+    const { t } = useLanguage()
     const [todos, setTodos] = useState<Todo[]>(initialTodos)
     const [newTask, setNewTask] = useState('')
     const [isAdding, setIsAdding] = useState(false)
@@ -31,7 +33,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             // Revert on error
             setTodos(todos.map(t => t.id === id ? { ...t, is_completed: currentStatus } : t))
             console.error('Error updating todo:', response.error)
-            alert("Erreur, réessayez")
+            alert(t('common_error'))
         }
     }
 
@@ -56,7 +58,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             console.error('Error adding todo:', response.error)
             setTodos(todos.filter(t => t.id !== tempId)) // Revert
             setNewTask(currentTaskText) // Restore input
-            alert("Erreur, réessayez")
+            alert(t('common_error'))
         } else if (response?.data) {
             // Replace temp ID with real ID
             setTodos(current => current.map(t => t.id === tempId ? { ...t, id: response.data.id } : t))
@@ -71,8 +73,8 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
     return (
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 mb-8">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">À faire</h3>
-                <button className="text-sm font-bold text-green-500 hover:text-green-600 transition-colors">Voir tout</button>
+                <h3 className="text-xl font-bold text-gray-900">{t('dash_todo_title')}</h3>
+                <button className="text-sm font-bold text-green-500 hover:text-green-600 transition-colors">{t('dash_todo_see_all')}</button>
             </div>
 
             <form onSubmit={addTodo} className="flex gap-3 mb-6">
@@ -80,7 +82,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
                     type="text"
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
-                    placeholder="Nouvelle tâche urgente..."
+                    placeholder={t('dash_todo_placeholder')}
                     className="flex-1 bg-[#F9F9F6] border border-transparent focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-500/10 rounded-2xl px-5 py-3 text-sm font-medium transition-all outline-none"
                 />
                 <button
@@ -95,7 +97,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             <div className="space-y-2">
                 {activeTodos.length === 0 ? (
                     <div className="text-center bg-gray-50 rounded-xl py-6 border border-gray-100 border-dashed">
-                        <p className="text-gray-400 text-sm font-medium">Aucune tâche en attente !</p>
+                        <p className="text-gray-400 text-sm font-medium">{t('dash_todo_empty')}</p>
                     </div>
                 ) : (
                     activeTodos.map(todo => (

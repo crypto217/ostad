@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { MoreVertical, Edit2, Trash2 } from 'lucide-react'
 import { deleteStudent } from '@/app/actions'
 import type { StudentItem } from '@/app/classes/[classId]/students/page'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface StudentCardProps {
     student: StudentItem
@@ -14,22 +15,35 @@ interface StudentCardProps {
 export default function StudentCard({ student, view }: StudentCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
+
     const genderDisplay = (gender: string | null | undefined) => {
         if (!gender) return '—'
         const g = gender.trim().toLowerCase()
-        if (g === 'male') return '👦 Garçon'
-        if (g === 'female') return '👧 Fille'
+        if (g === 'male' || g === 'garçon') return '👦 ' + (language === 'ar' ? 'ذكر' : language === 'en' ? 'Male' : 'Garçon')
+        if (g === 'female' || g === 'fille') return '👧 ' + (language === 'ar' ? 'أنثى' : language === 'en' ? 'Female' : 'Fille')
         return gender
+    }
+
+    const formatDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString)
+            const locale = language === 'ar' ? 'ar-DZ' : language === 'en' ? 'en-US' : 'fr-FR'
+            return date.toLocaleDateString(locale)
+        } catch (e) {
+            return dateString
+        }
     }
 
     const handleDelete = async () => {
         setIsMenuOpen(false)
-        if (window.confirm("Êtes-vous sûr de vouloir supprimer cet élève ?")) {
+        if (window.confirm(t('students_delete_confirm'))) {
             setIsDeleting(true)
             try {
                 await deleteStudent(student.id, student.class_id)
             } catch (err) {
-                alert("Erreur lors de la suppression.")
+                alert(t('students_error_delete'))
                 setIsDeleting(false)
             }
         }
@@ -62,19 +76,19 @@ export default function StudentCard({ student, view }: StudentCardProps) {
             {isMenuOpen && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
-                    <div className="absolute right-0 top-10 w-44 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-20 overflow-hidden">
+                    <div className={`absolute ${rtl ? 'left-0' : 'right-0'} top-10 w-44 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-20 overflow-hidden`}>
                         <Link
                             href={`/classes/${student.class_id}/students?edit=${student.id}`}
                             onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full text-left"
+                            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors w-full ${rtl ? 'flex-row-reverse text-right' : 'text-left'}`}
                         >
-                            <Edit2 size={16} className="text-gray-400" /> Modifier
+                            <Edit2 size={16} className="text-gray-400" /> {t('common_edit')}
                         </Link>
                         <button
                             onClick={handleDelete}
-                            className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
+                            className={`flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full ${rtl ? 'flex-row-reverse text-right' : 'text-left'}`}
                         >
-                            <Trash2 size={16} className="text-red-400" /> Supprimer
+                            <Trash2 size={16} className="text-red-400" /> {t('common_delete')}
                         </button>
                     </div>
                 </>
@@ -84,9 +98,9 @@ export default function StudentCard({ student, view }: StudentCardProps) {
 
     if (view === 'desktop') {
         return (
-            <tr className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
+            <tr className={`border-b border-gray-50 hover:bg-gray-50/50 transition-colors group ${rtl ? 'text-right' : ''}`}>
                 <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
+                    <div className={`flex items-center gap-4 ${rtl ? 'flex-row-reverse' : ''}`}>
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border shadow-sm ${avatarColor}`}>
                             {initials}
                         </div>
@@ -96,14 +110,14 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                     </div>
                 </td>
                 <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 tracking-wide">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 tracking-wide ${rtl ? 'flex-row-reverse' : ''}`}>
                         {genderDisplay(student.gender)}
                     </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                    {new Date(student.birth_date).toLocaleDateString('fr-FR')}
+                <td className={`px-6 py-4 text-sm text-gray-500 font-medium ${rtl ? 'text-right' : ''}`}>
+                    {formatDate(student.birth_date)}
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className={`px-6 py-4 ${rtl ? 'text-left' : 'text-right'}`}>
                     <ActionsMenu />
                 </td>
             </tr>
@@ -111,8 +125,8 @@ export default function StudentCard({ student, view }: StudentCardProps) {
     }
 
     return (
-        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4 relative hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-4 min-w-0">
+        <div className={`bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4 relative hover:shadow-md transition-shadow ${rtl ? 'flex-row-reverse text-right' : ''}`}>
+            <div className={`flex items-center gap-4 min-w-0 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base border-2 border-white shadow-sm shrink-0 ${avatarColor}`}>
                     {initials}
                 </div>
@@ -120,12 +134,12 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                     <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1 line-clamp-1">
                         {student.last_name.toUpperCase()} {student.first_name}
                     </h3>
-                    <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+                    <div className={`flex items-center gap-3 text-xs font-medium text-gray-500 ${rtl ? 'flex-row-reverse' : ''}`}>
                         <span className="flex items-center gap-1">
                             {genderDisplay(student.gender)}
                         </span>
                         <span className="bg-gray-300 w-1 h-1 rounded-full shrink-0" />
-                        <span>{new Date(student.birth_date).toLocaleDateString('fr-FR')}</span>
+                        <span>{formatDate(student.birth_date)}</span>
                     </div>
                 </div>
             </div>

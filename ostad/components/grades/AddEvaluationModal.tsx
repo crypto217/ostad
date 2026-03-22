@@ -1,136 +1,115 @@
 'use client'
 
 import { useState } from 'react'
+import { X, Loader2 } from 'lucide-react'
 import { createEvaluation } from '@/app/actions'
-import { Plus, X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
-export default function AddEvaluationModal({ classId, trimester }: { classId: string, trimester: number }) {
-    const [isOpen, setIsOpen] = useState(false)
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const router = useRouter()
+interface AddEvaluationModalProps {
+    isOpen: boolean
+    onClose: () => void
+    classId: string
+    trimester: number
+    onSuccess: () => void
+}
 
-    async function action(data: FormData) {
-        setIsSubmitting(true)
+export default function AddEvaluationModal({ isOpen, onClose, classId, trimester, onSuccess }: AddEvaluationModalProps) {
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
+    const [loading, setLoading] = useState(false)
+    const [formData, setFormData] = useState({
+        title: '',
+        max_value: 20,
+        date: new Date().toISOString().split('T')[0]
+    })
+
+    if (!isOpen) return null
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
         try {
-            await createEvaluation({
-                class_id: classId,
-                evaluation_title: data.get('evaluation_title') as string,
-                max_value: Number(data.get('max_value')),
-                trimester: Number(data.get('trimester')),
-                evaluation_date: data.get('evaluation_date') as string
+            await createEvaluation(classId, {
+                ...formData,
+                trimester
             })
-            setIsOpen(false)
-            router.refresh()
+            onSuccess()
+            setFormData({
+                title: '',
+                max_value: 20,
+                date: new Date().toISOString().split('T')[0]
+            })
         } catch (error) {
-            console.error("Failed to create evaluation", error)
-            alert("Erreur lors de la création de l'évaluation.")
+            console.error(error)
         } finally {
-            setIsSubmitting(false)
+            setLoading(false)
         }
     }
 
-    // Default to today
-    const today = new Date().toISOString().split('T')[0]
-
     return (
-        <>
-            <button
-                onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-3xl hover:bg-green-600 transition-colors font-medium shadow-sm"
-            >
-                <Plus className="w-5 h-5" />
-                Nouvelle Évaluation
-            </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200 overflow-hidden">
+                <div className={`p-6 border-b border-gray-100 flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+                    <h2 className="text-xl font-bold text-gray-900">{t('grades_new_eval')}</h2>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
 
-            {isOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold text-gray-900">Nouvelle Évaluation</h2>
-                            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
+                <form onSubmit={handleSubmit} className={`p-6 space-y-4 ${rtl ? 'text-right' : ''}`}>
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-semibold text-gray-700">{t('grades_eval_title')}</label>
+                        <input
+                            required
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder={t('grades_eval_placeholder')}
+                            className={`w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${rtl ? 'text-right' : ''}`}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-gray-700">{t('grades_max_value')}</label>
+                            <input
+                                required
+                                type="number"
+                                min="1"
+                                value={formData.max_value}
+                                onChange={(e) => setFormData({ ...formData, max_value: parseInt(e.target.value) })}
+                                className={`w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${rtl ? 'text-right' : ''}`}
+                            />
                         </div>
 
-                        <form action={action} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Titre de l'évaluation
-                                </label>
-                                <input
-                                    type="text"
-                                    name="evaluation_title"
-                                    required
-                                    placeholder="ex: Devoir n°1"
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Note Max
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="max_value"
-                                        required
-                                        defaultValue={20}
-                                        min={1}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Trimestre
-                                    </label>
-                                    <select
-                                        name="trimester"
-                                        required
-                                        defaultValue={trimester}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20 bg-white"
-                                    >
-                                        <option value={1}>Trimestre 1</option>
-                                        <option value={2}>Trimestre 2</option>
-                                        <option value={3}>Trimestre 3</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Date
-                                </label>
-                                <input
-                                    type="date"
-                                    name="evaluation_date"
-                                    required
-                                    defaultValue={today}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/20"
-                                />
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(false)}
-                                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-3xl transition-colors font-medium"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-6 py-2 bg-green-500 text-white rounded-3xl hover:bg-green-600 transition-colors font-medium disabled:opacity-50"
-                                >
-                                    {isSubmitting ? 'Création...' : 'Créer'}
-                                </button>
-                            </div>
-                        </form>
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-gray-700">{t('grades_eval_date')}</label>
+                            <input
+                                required
+                                type="date"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className={`w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${rtl ? 'text-right' : ''}`}
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
-        </>
+
+                    <div className="pt-4">
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white p-4 rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    {t('grades_creating')}
+                                </>
+                            ) : t('grades_create')}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     )
 }

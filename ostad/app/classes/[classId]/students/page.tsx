@@ -8,6 +8,7 @@ import StudentCard from '@/components/students/StudentCard'
 import AddStudentModal from '@/components/students/AddStudentModal'
 import EditStudentModal from '@/components/students/EditStudentModal'
 import BackButton from '@/components/layout/BackButton'
+import { translations, Language } from '@/lib/i18n/translations'
 
 export interface StudentItem {
     id: string
@@ -16,6 +17,31 @@ export interface StudentItem {
     gender: 'Garçon' | 'Fille'
     birth_date: string
     class_id: string
+}
+
+async function getProfileLanguage() {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                getAll() { return cookieStore.getAll() },
+                setAll() { },
+            },
+        }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return "fr";
+
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("preferred_language")
+        .eq("id", user.id)
+        .single();
+
+    return (profile?.preferred_language as Language) || "fr";
 }
 
 export default async function StudentsPage({ params, searchParams }: { params: Promise<{ classId: string }>, searchParams: Promise<{ new?: string, edit?: string }> }) {
@@ -34,6 +60,21 @@ export default async function StudentsPage({ params, searchParams }: { params: P
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
+
+    const language = await getProfileLanguage()
+    const t = (key: string) => {
+        const keys = key.split('.')
+        let result: any = translations[language]
+        for (const k of keys) {
+            if (result && result[k]) {
+                result = result[k]
+            } else {
+                return key
+            }
+        }
+        return result || key
+    }
+    const rtl = language === 'ar'
 
     // Fetch class details
     const { data: classData } = await supabase
@@ -58,42 +99,42 @@ export default async function StudentsPage({ params, searchParams }: { params: P
     const studentToEdit = resolvedSearchParams.edit ? students.find(s => s.id === resolvedSearchParams.edit) : null
 
     return (
-        <div className="min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 md:pl-[220px] xl:pl-[260px] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
-            <div className="max-w-md md:max-w-none md:container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12">
+        <div className={`min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 font-sans selection:bg-green-100 selection:text-green-900 transition-all ${rtl ? 'md:pr-[220px] xl:pr-[260px] md:pl-0' : 'md:pl-[220px] xl:pl-[260px]'}`}>
+            <div className={`container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12 ${rtl ? 'text-right' : ''}`}>
                 <BackButton />
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-                    <div className="flex items-center gap-4">
+                <div className={`flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 ${rtl ? 'md:flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-4 ${rtl ? 'flex-row-reverse' : ''}`}>
                         <Link
                             href="/classes"
                             className="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm shrink-0"
                         >
-                            <ArrowLeft size={20} />
+                            <ArrowLeft size={20} className={rtl ? 'rotate-180' : ''} />
                         </Link>
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex flex-wrap items-center gap-3">
+                            <h1 className={`text-2xl md:text-3xl font-bold text-gray-900 flex flex-wrap items-center gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
                                 {classData.class_name}
                                 <span className="bg-green-50 text-green-600 text-[11px] font-bold px-3 py-1.5 rounded-full border border-green-100 uppercase tracking-widest shrink-0">
-                                    {students.length} {students.length > 1 ? 'élèves' : 'élève'} au total
+                                    {students.length} {students.length > 1 ? t('students_count_plural') : t('students_count_singular')} {t('students_total_suffix')}
                                 </span>
                             </h1>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
                         <Link
                             href={`/classes/${resolvedParams.classId}/grades`}
                             className="flex items-center justify-center gap-2 px-5 py-3 bg-blue-500 text-white font-bold rounded-2xl shadow-sm hover:bg-blue-600 transition-all active:scale-95 text-sm shrink-0"
                         >
                             <BarChart2 size={18} />
-                            <span>📊 Voir les notes</span>
+                            <span>{t('students_view_grades')}</span>
                         </Link>
                         <Link
                             href={`/classes/${resolvedParams.classId}/students?new=1`}
                             className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white font-bold rounded-3xl shadow-sm hover:bg-green-600 transition-all active:scale-95 text-sm shrink-0"
                         >
                             <Plus size={20} className="stroke-[3]" />
-                            <span>Ajouter un élève</span>
+                            <span>{t('students_add_button')}</span>
                         </Link>
                     </div>
                 </div>
@@ -104,28 +145,28 @@ export default async function StudentsPage({ params, searchParams }: { params: P
                         <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-gray-400">
                             <Users size={32} />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun élève dans cette classe</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">{t('students_empty_title')}</h3>
                         <p className="text-sm font-medium text-gray-500 mb-8 leading-relaxed">
-                            Commencez à ajouter vos élèves pour pouvoir gérer les présences et les évaluations associées à {classData.class_name}.
+                            {t('students_empty_subtitle').replace('{className}', classData.class_name)}
                         </p>
                         <Link
                             href={`/classes/${resolvedParams.classId}/students?new=1`}
                             className="inline-flex items-center justify-center px-6 py-3 bg-green-500 text-white rounded-3xl font-bold hover:bg-green-600 transition-colors shadow-sm text-sm"
                         >
-                            Ajouter le premier élève
+                            {t('students_add_first')}
                         </Link>
                     </div>
                 ) : (
                     <>
                         {/* Desktop Table View */}
                         <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                            <table className="w-full text-left border-collapse">
+                            <table className={`w-full text-left border-collapse ${rtl ? 'text-right' : ''}`}>
                                 <thead>
-                                    <tr className="bg-gray-50/80 border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                                        <th className="px-6 py-4 rounded-tl-2xl">Élève</th>
-                                        <th className="px-6 py-4">Genre</th>
-                                        <th className="px-6 py-4">Date de naissance</th>
-                                        <th className="px-6 py-4 text-right rounded-tr-2xl">Actions</th>
+                                    <tr className={`bg-gray-50/80 border-b border-gray-100 text-[10px] uppercase tracking-widest text-gray-500 font-bold ${rtl ? 'flex-row-reverse' : ''}`}>
+                                        <th className={`px-6 py-4 ${rtl ? 'rounded-tr-2xl' : 'rounded-tl-2xl'}`}>{t('students_table_name')}</th>
+                                        <th className="px-6 py-4">{t('students_table_gender')}</th>
+                                        <th className="px-6 py-4">{t('students_table_dob')}</th>
+                                        <th className={`px-6 py-4 ${rtl ? 'text-left rounded-tl-2xl' : 'text-right rounded-tr-2xl'}`}>{t('students_table_actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

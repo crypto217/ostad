@@ -1,59 +1,68 @@
 'use client'
 
-type Attendance = {
-    id: string
-    student_id: string
-    status: 'present' | 'late' | 'absent'
-    participation_note: string | null
+import { Users, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+
+interface AttendanceSummaryProps {
+    totalStudents: number
+    attendances: any[]
 }
 
-export default function AttendanceSummary({
-    totalStudents,
-    attendances
-}: {
-    totalStudents: number
-    attendances: Attendance[]
-}) {
+export default function AttendanceSummary({ totalStudents, attendances }: AttendanceSummaryProps) {
+    const { t, language } = useLanguage()
+    const rtl = language === 'ar'
+
     const presentCount = attendances.filter(a => a.status === 'present').length
     const lateCount = attendances.filter(a => a.status === 'late').length
     const absentCount = attendances.filter(a => a.status === 'absent').length
+    const treatedCount = attendances.length
 
-    // Calculate total treated students (present + late + absent)
-    const treatedCount = presentCount + lateCount + absentCount
-
-    // Percentage based on treated students, or total students if considering "not yet treated" as negative? 
-    // Usually % is (present + late) / total
-    const presenceRate = totalStudents > 0 ? Math.round(((presentCount + lateCount) / totalStudents) * 100) : 0
+    const presenceRate = totalStudents > 0
+        ? Math.round(((presentCount + lateCount) / totalStudents) * 100)
+        : 0
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Résumé de l'appel</h3>
-                <span className="text-sm font-medium bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                    {treatedCount}/{totalStudents} traités
-                </span>
+        <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 ${rtl ? 'rtl' : ''}`}>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`flex items-center gap-3 mb-1 ${rtl ? 'flex-row-reverse text-right' : ''}`}>
+                    <div className="p-2 bg-blue-50 rounded-xl">
+                        <Users className="w-4 h-4 text-blue-500" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">{t('att_summary')}</p>
+                </div>
+                <p className={`text-2xl font-bold text-gray-900 ${rtl ? 'text-right' : ''}`}>
+                    {treatedCount}/{totalStudents} <span className="text-xs font-normal text-gray-400">{t('att_treated')}</span>
+                </p>
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
-                <div className="bg-green-50 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-green-600">{presentCount}</span>
-                    <span className="text-sm font-medium text-green-800">Présents</span>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`flex items-center gap-3 mb-1 ${rtl ? 'flex-row-reverse text-right' : ''}`}>
+                    <div className="p-2 bg-green-50 rounded-xl">
+                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">{t('att_present')}</p>
                 </div>
+                <p className={`text-2xl font-bold text-gray-900 ${rtl ? 'text-right' : ''}`}>{presentCount}</p>
+            </div>
 
-                <div className="bg-yellow-50 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-yellow-600">{lateCount}</span>
-                    <span className="text-sm font-medium text-yellow-800">Retards</span>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`flex items-center gap-3 mb-1 ${rtl ? 'flex-row-reverse text-right' : ''}`}>
+                    <div className="p-2 bg-amber-50 rounded-xl">
+                        <Clock className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">{t('att_late')}</p>
                 </div>
+                <p className={`text-2xl font-bold text-gray-900 ${rtl ? 'text-right' : ''}`}>{lateCount}</p>
+            </div>
 
-                <div className="bg-red-50 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-red-600">{absentCount}</span>
-                    <span className="text-sm font-medium text-red-800">Absents</span>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+                <div className={`flex items-center gap-3 mb-1 ${rtl ? 'flex-row-reverse text-right' : ''}`}>
+                    <div className="p-2 bg-red-50 rounded-xl">
+                        <CheckCircle2 className="w-4 h-4 text-red-500" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-500">{t('att_rate')}</p>
                 </div>
-
-                <div className="bg-[#F9F9F6] border border-gray-100 rounded-xl p-4 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">{presenceRate}%</span>
-                    <span className="text-sm font-medium text-gray-500">Taux</span>
-                </div>
+                <p className={`text-2xl font-bold text-gray-900 ${rtl ? 'text-right' : ''}`}>{presenceRate}%</p>
             </div>
         </div>
     )
