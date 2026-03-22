@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Calendar, Users, GraduationCap, Settings } from 'lucide-react'
+import { Home, Calendar, Users, GraduationCap, Settings, ClipboardList, BarChart2 } from 'lucide-react'
 
 export default function Navigation() {
     const pathname = usePathname()
@@ -13,6 +13,11 @@ export default function Navigation() {
         { name: 'Classes', href: '/classes', icon: Users },
         { name: 'Élèves', href: '/eleves', icon: GraduationCap },
         { name: 'Paramètres', href: '/settings', icon: Settings },
+    ]
+
+    const quickLinks = [
+        { name: 'Journal d\'appel', href: '/sessions', icon: ClipboardList },
+        { name: 'Notes', href: '/classes', icon: BarChart2 },
     ]
 
     return (
@@ -69,6 +74,34 @@ export default function Navigation() {
                             </Link>
                         )
                     })}
+                </div>
+
+                {/* Quick Access Section */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-2 mb-2">
+                        Accès rapide
+                    </p>
+                    <div className="flex flex-col gap-1">
+                        {quickLinks.map((link) => {
+                            const Icon = link.icon
+                            const isActive = pathname.startsWith(link.href) && link.href !== '/classes'
+                                ? true
+                                : pathname === link.href
+                            return (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-xs font-medium ${isActive
+                                            ? 'bg-gray-100 text-gray-700'
+                                            : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                                        }`}
+                                >
+                                    <Icon size={15} strokeWidth={2} />
+                                    <span>{link.name}</span>
+                                </Link>
+                            )
+                        })}
+                    </div>
                 </div>
             </aside>
         </>

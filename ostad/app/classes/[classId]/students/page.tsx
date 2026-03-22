@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Plus, Users } from 'lucide-react'
+import { ArrowLeft, Plus, Users, BarChart2 } from 'lucide-react'
 import Navigation from '@/components/layout/Navigation'
 import StudentCard from '@/components/students/StudentCard'
 import AddStudentModal from '@/components/students/AddStudentModal'
@@ -80,13 +80,22 @@ export default async function StudentsPage({ params, searchParams }: { params: P
                         </div>
                     </div>
 
-                    <Link
-                        href={`/classes/${resolvedParams.classId}/students?new=1`}
-                        className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white font-bold rounded-3xl shadow-sm hover:bg-green-600 transition-all active:scale-95 text-sm shrink-0"
-                    >
-                        <Plus size={20} className="stroke-[3]" />
-                        <span>Ajouter un élève</span>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={`/classes/${resolvedParams.classId}/grades`}
+                            className="flex items-center justify-center gap-2 px-5 py-3 bg-blue-500 text-white font-bold rounded-2xl shadow-sm hover:bg-blue-600 transition-all active:scale-95 text-sm shrink-0"
+                        >
+                            <BarChart2 size={18} />
+                            <span>📊 Voir les notes</span>
+                        </Link>
+                        <Link
+                            href={`/classes/${resolvedParams.classId}/students?new=1`}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-green-500 text-white font-bold rounded-3xl shadow-sm hover:bg-green-600 transition-all active:scale-95 text-sm shrink-0"
+                        >
+                            <Plus size={20} className="stroke-[3]" />
+                            <span>Ajouter un élève</span>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Content */}

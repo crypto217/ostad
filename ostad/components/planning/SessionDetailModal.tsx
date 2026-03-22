@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { X, Loader2, Play, Ban, Trash2, CalendarPlus, Upload, File as FileIcon, Plus } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { X, Loader2, Play, Ban, Trash2, CalendarPlus, Upload, File as FileIcon, Plus, ClipboardList } from 'lucide-react'
 import { createCourseSession, updateSessionStatus, updateSessionDetails, deleteWeeklySlot } from '@/app/actions'
 
 import { createClient } from '@/lib/supabase'
@@ -16,6 +17,7 @@ interface SessionDetailModalProps {
 }
 
 export default function SessionDetailModal({ isOpen, onClose, schedule, session, date, viewMode }: SessionDetailModalProps) {
+    const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
@@ -288,6 +290,15 @@ export default function SessionDetailModal({ isOpen, onClose, schedule, session,
                 {viewMode === 'this_week' && session && (
                     <div className="p-6 border-t border-gray-100 bg-[#F9F9F6]/50">
                         <div className="flex flex-col gap-3">
+                            {/* Attendance shortcut */}
+                            <button
+                                onClick={() => { onClose(); router.push(`/sessions/${session.id}/attendance`) }}
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-2xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                            >
+                                <ClipboardList size={18} />
+                                📋 Faire l'appel →
+                            </button>
+
                             <button
                                 onClick={handleSaveDetails}
                                 disabled={loading}
@@ -302,7 +313,7 @@ export default function SessionDetailModal({ isOpen, onClose, schedule, session,
                                     <button
                                         onClick={() => handleUpdateStatus('in_progress')}
                                         disabled={loading}
-                                        className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-2xl transition-colors shadow-sm flex justify-center items-center gap-2"
+                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3.5 rounded-2xl transition-colors shadow-sm flex justify-center items-center gap-2"
                                     >
                                         <Play size={18} fill="currentColor" />
                                         Démarrer
