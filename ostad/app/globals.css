@@ -12,11 +12,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Force Light Mode and Input Visibility */
+input, textarea, select {
+  color: #1a1a1a !important;
+  background-color: #ffffff !important;
+}
+
+input::placeholder, 
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+input:focus, 
+textarea:focus, 
+select:focus {
+  color: #1a1a1a !important;
+  background-color: #ffffff !important;
 }
 
 body {
@@ -24,3 +35,4 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
