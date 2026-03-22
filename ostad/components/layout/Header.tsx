@@ -12,6 +12,12 @@ interface HeaderProps {
 }
 
 export default function Header({ profile }: HeaderProps) {
+    const genderDisplay = (gender: string | null | undefined) => {
+        if (!gender) return '—'
+        if (gender === 'male') return '👦 Garçon'
+        if (gender === 'female') return '👧 Fille'
+        return gender
+    }
     const [dateStr, setDateStr] = useState('')
 
     useEffect(() => {

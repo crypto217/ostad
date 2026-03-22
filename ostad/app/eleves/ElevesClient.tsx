@@ -20,8 +20,8 @@ interface ClassWithStudents {
 
 export default function ElevesClient({ classes }: { classes: ClassWithStudents[] }) {
     const [searchQuery, setSearchQuery] = useState('')
-    const genderDisplay = (gender: string | null) => {
-        if (!gender) return ''
+    const genderDisplay = (gender: string | null | undefined) => {
+        if (!gender) return '—'
         if (gender === 'male' || gender === 'Garçon') return '👦 Garçon'
         if (gender === 'female' || gender === 'Fille') return '👧 Fille'
         return gender

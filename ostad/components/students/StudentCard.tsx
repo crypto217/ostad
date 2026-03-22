@@ -14,7 +14,8 @@ interface StudentCardProps {
 export default function StudentCard({ student, view }: StudentCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const genderDisplay = (gender: string) => {
+    const genderDisplay = (gender: string | null | undefined) => {
+        if (!gender) return '—'
         if (gender === 'male' || gender === 'Garçon') return '👦 Garçon'
         if (gender === 'female' || gender === 'Fille') return '👧 Fille'
         return gender
