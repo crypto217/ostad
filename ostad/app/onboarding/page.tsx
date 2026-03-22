@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle2 } from 'lucide-react'
+import { getCivility } from '@/lib/i18n/civility'
 
 export default function Onboarding() {
     const [fullName, setFullName] = useState('')
@@ -14,6 +15,7 @@ export default function Onboarding() {
     const [classesCount, setClassesCount] = useState<number | ''>('')
 
     const [loading, setLoading] = useState(false)
+    const [showSuccess, setShowSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     const router = useRouter()
@@ -48,9 +50,39 @@ export default function Onboarding() {
             setError(insertError.message)
             setLoading(false)
         } else {
-            router.push('/dashboard')
-            router.refresh()
+            setShowSuccess(true)
+            setTimeout(() => {
+                router.push('/dashboard')
+                router.refresh()
+            }, 2500)
         }
+    }
+
+    if (showSuccess) {
+        return (
+            <div className="min-h-screen bg-[#F9F9F6] flex items-center justify-center p-4">
+                <div className="w-full max-w-md bg-white rounded-3xl shadow-sm p-12 text-center border border-gray-100 flex flex-col items-center gap-6">
+                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-500 mb-2">
+                        <CheckCircle2 size={48} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+                            {getCivility(fullName, gender || null, (language as any) || 'fr')} !
+                        </h1>
+                        <p className="text-gray-500 text-lg">Ostad est prêt. Redirection vers votre tableau de bord...</p>
+                    </div>
+                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mt-4">
+                        <div className="bg-green-500 h-full animate-[loading_2.5s_ease-in-out]" style={{ width: '100%' }}></div>
+                    </div>
+                </div>
+                <style jsx>{`
+                    @keyframes loading {
+                        from { width: 0% }
+                        to { width: 100% }
+                    }
+                `}</style>
+            </div>
+        )
     }
 
     return (
