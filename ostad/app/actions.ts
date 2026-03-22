@@ -91,6 +91,7 @@ const DEFAULT_EVALUATIONS = [
     { title: 'Devoir 1', max_value: 20 },
     { title: 'Devoir 2', max_value: 20 },
     { title: 'Examen', max_value: 20 },
+    { title: 'Comportement', max_value: 20 },
 ]
 
 export async function createStudent(data: { class_id: string; first_name: string; last_name: string; gender: string; birth_date: string }) {
@@ -538,6 +539,7 @@ export async function seedDefaultGradesForExistingStudents(classId: string) {
         { title: 'Devoir 1', max_value: 20 },
         { title: 'Devoir 2', max_value: 20 },
         { title: 'Examen', max_value: 20 },
+        { title: 'Comportement', max_value: 20 },
     ]
 
     const gradesToInsert = students.flatMap(student =>

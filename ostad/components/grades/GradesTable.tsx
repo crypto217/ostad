@@ -25,6 +25,21 @@ type Evaluation = {
     date: string
 }
 
+// Fixed column order: Devoir 1, Devoir 2, Examen, Comportement (always last before Moyenne)
+const COLUMN_ORDER = ['Devoir 1', 'Devoir 2', 'Examen', 'Comportement']
+
+function sortEvaluations(evaluations: Evaluation[]): Evaluation[] {
+    return [...evaluations].sort((a, b) => {
+        const ia = COLUMN_ORDER.indexOf(a.title)
+        const ib = COLUMN_ORDER.indexOf(b.title)
+        // Known columns get their index; unknown columns go after
+        const posA = ia === -1 ? COLUMN_ORDER.length : ia
+        const posB = ib === -1 ? COLUMN_ORDER.length : ib
+        if (posA !== posB) return posA - posB
+        return a.title.localeCompare(b.title)
+    })
+}
+
 export default function GradesTable({
     students,
     grades,
@@ -45,6 +60,9 @@ export default function GradesTable({
 
     // Sort students alphabetically
     const sortedStudents = [...students].sort((a, b) => a.last_name.localeCompare(b.last_name))
+
+    // Sort evaluations in the fixed order
+    const sortedEvaluations = sortEvaluations(evaluations)
 
     const handleGradeChange = useCallback((gradeId: string, newValueStr: string, maxValue: number) => {
         let numericValue: number | null = null
@@ -137,32 +155,39 @@ export default function GradesTable({
                             <th scope="col" className="px-6 py-4 font-semibold sticky left-0 bg-gray-50 z-10">
                                 Élève
                             </th>
-                            {evaluations.map((evalItem, idx) => (
-                                <th key={idx} scope="col" className="px-4 py-4 font-semibold text-center min-w-[130px]">
-                                    <div className="flex items-center justify-center gap-1.5 group">
-                                        <div className="flex flex-col items-center">
-                                            <span className="truncate max-w-[90px]" title={evalItem.title}>
-                                                {evalItem.title}
-                                            </span>
-                                            <span className="text-[10px] text-gray-400 font-normal mt-0.5">
-                                                /{evalItem.max_value} • {new Date(evalItem.date).toLocaleDateString('fr-FR')}
-                                            </span>
+                            {sortedEvaluations.map((evalItem, idx) => {
+                                const isComportement = evalItem.title === 'Comportement'
+                                return (
+                                    <th
+                                        key={idx}
+                                        scope="col"
+                                        className={`px-4 py-4 font-semibold text-center min-w-[130px] ${isComportement ? 'bg-purple-50' : ''}`}
+                                    >
+                                        <div className="flex items-center justify-center gap-1.5 group">
+                                            <div className="flex flex-col items-center">
+                                                <span className="truncate max-w-[90px]" title={evalItem.title}>
+                                                    {isComportement ? '⭐ ' : ''}{evalItem.title}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400 font-normal mt-0.5">
+                                                    /{evalItem.max_value} • {new Date(evalItem.date).toLocaleDateString('fr-FR')}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDeleteEvaluation(evalItem.title)}
+                                                disabled={deletingEval === evalItem.title}
+                                                title={`Supprimer "${evalItem.title}"`}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 shrink-0"
+                                            >
+                                                {deletingEval === evalItem.title ? (
+                                                    <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
+                                                ) : (
+                                                    <Trash2 size={13} />
+                                                )}
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => handleDeleteEvaluation(evalItem.title)}
-                                            disabled={deletingEval === evalItem.title}
-                                            title={`Supprimer "${evalItem.title}"`}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 shrink-0"
-                                        >
-                                            {deletingEval === evalItem.title ? (
-                                                <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
-                                            ) : (
-                                                <Trash2 size={13} />
-                                            )}
-                                        </button>
-                                    </div>
-                                </th>
-                            ))}
+                                    </th>
+                                )
+                            })}
                             <th scope="col" className="px-6 py-4 font-semibold text-center border-l bg-gray-50">
                                 Moyenne /20
                             </th>
@@ -179,13 +204,17 @@ export default function GradesTable({
                                         <span className="capitalize font-normal text-gray-600">{student.first_name}</span>
                                     </td>
 
-                                    {evaluations.map((evalItem, idx) => {
+                                    {sortedEvaluations.map((evalItem, idx) => {
+                                        const isComportement = evalItem.title === 'Comportement'
                                         const gradeEntry = localGrades.find(
                                             g => g.student_id === student.id && g.evaluation_title === evalItem.title
                                         )
 
                                         return (
-                                            <td key={idx} className="px-4 py-2 text-center">
+                                            <td
+                                                key={idx}
+                                                className={`px-4 py-2 text-center ${isComportement ? 'bg-purple-50/40' : ''}`}
+                                            >
                                                 {gradeEntry ? (
                                                     <div className="relative inline-block w-20">
                                                         <input
@@ -218,7 +247,7 @@ export default function GradesTable({
 
                         {sortedStudents.length === 0 && (
                             <tr>
-                                <td colSpan={evaluations.length + 2} className="px-6 py-8 text-center text-gray-500">
+                                <td colSpan={sortedEvaluations.length + 2} className="px-6 py-8 text-center text-gray-500">
                                     Aucun élève dans cette classe.
                                 </td>
                             </tr>
