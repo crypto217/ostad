@@ -50,11 +50,13 @@ export default async function AttendancePage({ params }: { params: { sessionId: 
 
     if (sessionError || !session) notFound()
 
+    const classData = Array.isArray(session.classes) ? (session.classes as any)[0] : (session.classes as any)
+
     // Fetch all students for this class
     const { data: students, error: studentsError } = await supabase
         .from('students')
         .select('id, first_name, last_name, gender')
-        .eq('class_id', session.classes.id)
+        .eq('class_id', classData.id)
 
     if (studentsError) throw new Error(studentsError.message)
 
@@ -94,7 +96,7 @@ export default async function AttendancePage({ params }: { params: { sessionId: 
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
-                            Journal d'Appel - {session.classes.name}
+                            Journal d'Appel - {classData.name}
                         </h1>
                         <p className="text-gray-500 capitalize">
                             {formattedDate} {formattedTime && `• ${formattedTime}`}
