@@ -16,8 +16,9 @@ export default function StudentCard({ student, view }: StudentCardProps) {
     const [isDeleting, setIsDeleting] = useState(false)
     const genderDisplay = (gender: string | null | undefined) => {
         if (!gender) return '—'
-        if (gender === 'male' || gender === 'Garçon') return '👦 Garçon'
-        if (gender === 'female' || gender === 'Fille') return '👧 Fille'
+        const g = gender.trim().toLowerCase()
+        if (g === 'male') return '👦 Garçon'
+        if (g === 'female') return '👧 Fille'
         return gender
     }
 
