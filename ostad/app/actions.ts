@@ -581,3 +581,24 @@ export async function updateProfile(data: { full_name: string; subject: string; 
     revalidatePath('/eleves')
     return { success: true }
 }
+
+export async function updateLanguage(language: 'fr' | 'ar' | 'en') {
+    const supabase = await getSupabase()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_language: language })
+        .eq('id', user.id)
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/')
+    revalidatePath('/dashboard')
+    revalidatePath('/planning')
+    revalidatePath('/classes')
+    revalidatePath('/settings')
+    revalidatePath('/eleves')
+    return { success: true }
+}

@@ -3,6 +3,7 @@
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getCivility, getDateLocale, isRTL } from '@/lib/i18n/civility'
+import LanguageSwitcher from './LanguageSwitcher'
 
 interface HeaderProps {
     profile: {
@@ -53,7 +54,7 @@ export default function Header({ profile }: HeaderProps) {
             </button>
 
             {/* Desktop Search Bar & Avatar */}
-            <div className={`hidden xl:flex items-center gap-6 flex-1 max-w-md ${rtl ? 'mr-auto ml-0' : 'ml-auto'}`}>
+            <div className={`hidden xl:flex items-center gap-6 flex-1 max-w-xl ${rtl ? 'mr-auto ml-0' : 'ml-auto'}`}>
                 <div className="relative flex-1">
                     <div className={`absolute inset-y-0 ${rtl ? 'right-0 pr-4' : 'left-0 pl-4'} flex items-center pointer-events-none text-gray-400`}>
                         <Search size={20} />
@@ -63,6 +64,10 @@ export default function Header({ profile }: HeaderProps) {
                         placeholder={rtl ? "البحث عن الطلاب، الفصول، الدروس..." : "Rechercher des élèves, classes, cours..."}
                         className={`w-full ${rtl ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-white border border-gray-200 rounded-2xl focus:border-green-400 focus:ring-4 focus:ring-green-50 outline-none transition-all text-sm placeholder:text-gray-400 shadow-sm ${rtl ? 'text-right' : ''}`}
                     />
+                </div>
+
+                <div className="shrink-0">
+                    <LanguageSwitcher currentLanguage={lang as any} />
                 </div>
 
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0 border-2 border-white ring-2 ring-gray-100 cursor-pointer hover:scale-105 transition-transform">

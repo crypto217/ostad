@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { updateProfile } from '@/app/actions'
-import { LogOut, Save, Loader2 } from 'lucide-react'
+import { LogOut, Save, Loader2, Globe } from 'lucide-react'
+import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
 
 export default function SettingsClient({ initialProfile }: { initialProfile: any }) {
     const router = useRouter()
@@ -98,17 +99,15 @@ export default function SettingsClient({ initialProfile }: { initialProfile: any
                     </select>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Langue préférée</label>
-                    <select
-                        value={formData.preferred_language}
-                        onChange={(e) => setFormData({ ...formData, preferred_language: e.target.value })}
-                        className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all"
-                    >
-                        <option value="fr">Français (FR)</option>
-                        <option value="ar">Arabe (AR)</option>
-                        <option value="en">Anglais (EN)</option>
-                    </select>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Globe className="w-5 h-5 text-gray-400" />
+                        <label className="block text-sm font-bold text-gray-700">Langue de l'interface</label>
+                    </div>
+                    <LanguageSwitcher currentLanguage={formData.preferred_language as any} />
+                    <p className="text-xs text-gray-500 mt-3 italic">
+                        Le changement de langue s'applique immédiatement à tout le tableau de bord.
+                    </p>
                 </div>
 
                 <div>
