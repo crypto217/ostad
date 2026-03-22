@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Play } from 'lucide-react'
+import { Users, Clock } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface NextCourse {
@@ -17,16 +17,12 @@ interface HeroCardProps {
     nextCourse: NextCourse | null
 }
 
-const colorMap = {
-    blue: 'bg-blue-100 text-blue-700',
-    green: 'bg-green-100 text-green-700',
-    purple: 'bg-purple-100 text-purple-700',
-    yellow: 'bg-yellow-100 text-yellow-800',
-}
-
 export default function HeroCard({ nextCourse }: HeroCardProps) {
-    const { t, language } = useLanguage()
-    const [timeRemaining, setTimeRemaining] = useState<string>('')
+    const { language } = useLanguage() // t is not used for now as we hardcode French
+    const [timeLeft, setTimeLeft] = useState<{ value: string; label: string }>({
+        value: '00:00',
+        label: 'minutes'
+    })
 
     useEffect(() => {
         if (!nextCourse) return
@@ -37,12 +33,12 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
             const endTime = new Date(nextCourse.end_time)
 
             if (now >= startTime && now <= endTime) {
-                setTimeRemaining(t('dash_in_progress'))
+                setTimeLeft({ value: 'LIVE', label: 'EN COURS' })
                 return
             }
 
             if (now > endTime) {
-                setTimeRemaining(t('common_success'))
+                setTimeLeft({ value: 'DONE', label: 'Terminé' })
                 return
             }
 
@@ -51,69 +47,99 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
             const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
             const seconds = Math.floor((diff % (1000 * 60)) / 1000)
 
-            const prefix = t('dash_countdown')
             if (hours > 0) {
-                setTimeRemaining(`${prefix} ${hours}h ${minutes}min`)
+                setTimeLeft({
+                    value: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+                    label: hours === 1 ? 'heure' : 'heures'
+                })
             } else {
-                setTimeRemaining(`${prefix} ${minutes}m ${seconds}s`)
+                setTimeLeft({
+                    value: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
+                    label: minutes === 1 ? 'minute' : 'minutes'
+                })
             }
         }
 
         calculateTime()
         const interval = setInterval(calculateTime, 1000)
         return () => clearInterval(interval)
-    }, [nextCourse, t])
+    }, [nextCourse])
+
+    const formatTimeRange = (start: string, end: string) => {
+        const locale = language === 'ar' ? 'ar-DZ' : (language === 'fr' ? 'fr-FR' : 'en-US')
+        const formatOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
+        const startTime = new Date(start).toLocaleTimeString(locale, formatOptions)
+        const endTime = new Date(end).toLocaleTimeString(locale, formatOptions)
+        return `${startTime} – ${endTime}`
+    }
 
     if (!nextCourse) {
         return (
-            <div className="bg-white rounded-3xl shadow-sm p-8 border border-gray-100 mb-8 flex flex-col items-center justify-center text-center">
-                <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6 text-blue-500">
-                    <span className="text-3xl">😊</span>
+            <div className="bg-green-500 rounded-3xl p-8 min-h-[180px] shadow-lg flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-500">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
+                <div className="bg-green-400/30 text-white rounded-full px-4 py-1.5 text-sm font-bold inline-flex items-center gap-2 mb-4 relative z-10">
+                    <span className="w-2 h-2 rounded-full bg-green-200 animate-pulse" />
+                    {"Pas de cours aujourd'hui"}
                 </div>
-                <h2 className="text-2xl font-black text-gray-900 mb-3">{t('dash_no_course')}</h2>
-                <p className="text-gray-500 font-medium text-base leading-relaxed">{t('dash_enjoy')}</p>
+                <h2 className="text-3xl md:text-4xl font-black text-white mb-2 relative z-10">
+                    {"Profitez de votre journée ! 🌟"}
+                </h2>
+                <div className="text-6xl mt-4 relative z-10">😊</div>
             </div>
         )
     }
 
-    const formatTime = (isoString: string) => {
-        const locale = language === 'ar' ? 'ar-DZ' : (language === 'fr' ? 'fr-FR' : 'en-US')
-        return new Date(isoString).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-    }
-
-    const tagColorClass = colorMap[nextCourse.color_code] || colorMap.blue
-
     return (
-        <div className="bg-white rounded-3xl shadow-md p-8 border border-gray-100 mb-8 relative overflow-hidden">
-            <div className={`flex justify-between items-center mb-6 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
-                <div className="flex flex-col gap-1">
-                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                        {t('dash_next_class_label') || "PROCHAIN COURS"}
-                    </span>
-                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold w-fit ${tagColorClass}`}>
-                        {nextCourse.class_name}
-                    </span>
+        <div className={`w-full ${language === 'ar' ? 'rtl' : ''}`}>
+            {/* Main Green Card */}
+            <div className={`bg-[#22C55E] rounded-3xl p-8 shadow-xl min-h-[180px] relative overflow-hidden flex flex-col md:flex-row gap-8 items-center transition-all duration-500`}>
+                {/* Background Decoration */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24" />
+
+                {/* Left Column: Course Info */}
+                <div className={`flex-1 w-full z-10 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
+                    <div className="bg-green-400/30 text-white rounded-full px-4 py-1.5 text-sm font-bold inline-flex items-center gap-2 w-fit">
+                        <span className="w-2 h-2 rounded-full bg-green-200 animate-pulse shadow-[0_0_8px_rgba(187,247,208,0.8)]" />
+                        {"Prochain cours"}
+                    </div>
+
+                    <h2 className="text-3xl md:text-4xl font-black text-white mt-4 leading-tight">
+                        {nextCourse.lesson_title}
+                    </h2>
+
+                    <div className={`flex flex-wrap items-center gap-6 mt-4 text-green-100 text-sm font-medium ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <Users size={18} className="text-green-200" />
+                            <span>{nextCourse.class_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Clock size={18} className="text-green-200" />
+                            <span>{formatTimeRange(nextCourse.start_time, nextCourse.end_time)}</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                    <span className="text-4xl font-black text-gray-900">
-                        {timeRemaining.match(/\d+/g)?.slice(0, 2).join(':') || timeRemaining}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-500 tracking-wide">
-                        {timeRemaining}
-                    </span>
+
+                {/* Right Column: Countdown Box */}
+                <div className="shrink-0 z-10 w-full md:w-auto">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 text-center min-w-[170px] border border-white/20 shadow-inner">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-green-100 mb-2">
+                            {"COMMENCE DANS"}
+                        </p>
+                        <div className="text-6xl font-black text-white tracking-tighter tabular-nums leading-none">
+                            {timeLeft.value}
+                        </div>
+                        <p className="text-sm text-green-200 font-medium mt-2">
+                            {timeLeft.label}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            <h2 className={`text-3xl font-black text-gray-900 mb-2 ${language === 'ar' ? 'text-right' : ''}`}>{nextCourse.lesson_title}</h2>
-            <p className={`text-gray-500 font-medium mb-8 text-base flex items-center gap-2 ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
-                <span>{formatTime(nextCourse.start_time)}</span>
-                <span className="text-gray-300">→</span>
-                <span>{formatTime(nextCourse.end_time)}</span>
-            </p>
-
-            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold h-14 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-sm text-lg px-8">
-                <Play fill="currentColor" size={20} className={language === 'ar' ? 'rotate-180' : ''} />
-                {t('dash_start_class')}
+            {/* CTA Button Below Card */}
+            <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-5 rounded-2xl text-xl mt-4 shadow-lg hover:shadow-green-500/20 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3 border border-green-400/20">
+                <span className="text-2xl animate-bounce">🚀</span>
+                {"Démarrer le Mode Classe"}
             </button>
         </div>
     )
