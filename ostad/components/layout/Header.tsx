@@ -42,10 +42,10 @@ export default function Header({ profile }: HeaderProps) {
             dir={rtl ? 'rtl' : 'ltr'}
         >
             <div className={rtl ? 'text-right' : ''}>
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">
+                <h1 className="text-xl font-bold text-gray-900 mb-1">
                     {getCivility(profile.full_name, profile.gender || null, language)}
                 </h1>
-                <p className="text-sm font-medium text-gray-500 capitalize">{dateStr}</p>
+                <p className="text-sm font-normal text-gray-400 capitalize">{dateStr}</p>
             </div>
 
             {/* Mobile Search Icon */}

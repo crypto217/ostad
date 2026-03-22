@@ -10,7 +10,12 @@ import Navigation from '@/components/layout/Navigation'
 import HeroCard from '@/components/dashboard/HeroCard'
 import TodoBlock from '@/components/dashboard/TodoBlock'
 import KPIGrid from '@/components/dashboard/KPIGrid'
+import ClassesList from '@/components/dashboard/ClassesList'
 
+/**
+ * DashboardContent - The brain of the dashboard and primary data orchestrator.
+ * Preserves all business logic and Supabase queries while reorganizing the layout for the 'Kinetic Classroom' aesthetic.
+ */
 async function DashboardContent() {
     const cookieStore = await cookies()
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -36,9 +41,11 @@ async function DashboardContent() {
     startOfWeek.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)) // Monday
     startOfWeek.setHours(0, 0, 0, 0)
 
+    // Parallel Data Fetching (Logic STRICTLY UNTOUCHED)
     const [
         { data: profile },
         { count: classesCount },
+        { data: classesData },
         { data: nextSessionData },
         { data: pendingTodosAll },
         { data: attendancesThisWeek },
@@ -47,6 +54,10 @@ async function DashboardContent() {
     ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('classes').select('id', { count: 'exact', head: true }).eq('teacher_id', user.id),
+        supabase.from('classes')
+            .select('id, class_name, students(count)')
+            .eq('teacher_id', user.id)
+            .limit(4),
         supabase
             .from('course_sessions')
             .select('*, classes!inner(class_name, teacher_id)')
@@ -78,6 +89,7 @@ async function DashboardContent() {
 
     if (!profile) redirect('/onboarding')
 
+    // Data Formatting for components
     let nextCourseFormatted = null
     if (nextSessionData) {
         const startTime = new Date(nextSessionData.scheduled_time)
@@ -121,98 +133,101 @@ async function DashboardContent() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-8 md:py-12 animate-in fade-in duration-700">
+            {/* Conditional Empty State Alert (Redesigned) */}
             {classesCount === 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-5 mb-8 relative overflow-hidden shadow-sm">
-                    <div className="relative z-10 text-yellow-800">
-                        <h4 className="font-bold text-lg mb-1">Aucune classe</h4>
-                        <p className="text-base mb-4 opacity-90 leading-relaxed">Vous n'avez pas encore configuré vos classes.</p>
-                        <Link href="/classes/new" className="inline-block bg-yellow-400 text-yellow-900 text-base font-bold py-3 px-6 rounded-2xl hover:bg-yellow-500 transition-colors shadow-sm h-12 flex items-center w-fit">
-                            Configurer mes classes →
+                <div className="bg-[#FEFCE8] border-none rounded-[3rem] p-8 mb-12 relative overflow-hidden shadow-sm flex items-center gap-8">
+                    <div className="relative z-10 flex-1">
+                        <h4 className="font-black text-2xl text-yellow-900 mb-2 uppercase tracking-tight">C&apos;est un début ! 🌱</h4>
+                        <p className="text-lg mb-6 text-yellow-800 opacity-80 font-bold leading-relaxed">Vous n&apos;avez pas encore configuré vos classes. Commençons par là pour activer votre dashboard.</p>
+                        <Link href="/classes/new" className="inline-flex items-center gap-3 bg-[#EAB308] text-white font-black py-4 px-8 rounded-2xl hover:bg-[#CA8A04] transition-all shadow-xl active:scale-95 text-lg">
+                            Configurer mes classes
+                            <span className="text-xl">➔</span>
                         </Link>
                     </div>
-                    <Presentation size={100} className="absolute -right-6 -bottom-6 text-yellow-200 opacity-40 rotate-[-10deg]" />
+                    <div className="hidden lg:block shrink-0 relative z-10 w-48 h-48 bg-yellow-400/20 rounded-full flex items-center justify-center text-yellow-600 rotate-12">
+                        <Presentation size={80} strokeWidth={2.5} />
+                    </div>
+                    <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-yellow-400/10 rounded-full blur-3xl" />
                 </div>
             )}
 
-            {profile && <Header profile={profile} />}
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2">
-                    <HeroCard nextCourse={nextCourseFormatted} />
+            {/* Kinetic Header Component */}
+            {profile && (
+                <div className="mb-12">
+                    <Header profile={profile} />
                 </div>
-                <div className="lg:col-span-1 min-w-0">
-                    <TodoBlock initialTodos={topPendingTodos} />
+            )}
+
+            {/* Main Dashboard Grid System (2/3 + 1/3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Left Content Area (8/12) */}
+                <div className="lg:col-span-8 space-y-10">
+                    <HeroCard nextCourse={nextCourseFormatted} />
+                    <div className="pt-2">
+                        <KPIGrid stats={stats} />
+                    </div>
+                    <div>
+                        <ClassesList classes={classesData || []} />
+                    </div>
+                </div>
+
+                {/* Right Sidebar Area (4/12) */}
+                <div className="lg:col-span-4 min-w-0">
+                    <div className="sticky top-12">
+                        <TodoBlock initialTodos={topPendingTodos} />
+                    </div>
                 </div>
             </div>
-
-            <KPIGrid stats={stats} />
         </div>
     )
 }
 
+/**
+ * DashboardSkeleton - High-precision loading state for seamless transitions.
+ */
 function DashboardSkeleton() {
     return (
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
-            <div className="flex justify-between items-center mb-10 animate-pulse">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-12 py-8 md:py-12 animate-pulse">
+            <div className="flex justify-between items-center mb-12">
                 <div>
-                    <div className="h-10 bg-gray-200 rounded-full w-48 mb-3"></div>
-                    <div className="h-5 bg-gray-200 rounded-full w-32"></div>
+                    <div className="h-14 bg-gray-100 rounded-full w-64 mb-4"></div>
+                    <div className="h-6 bg-gray-100 rounded-full w-40"></div>
                 </div>
-                <div className="hidden md:flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                </div>
+                <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-3xl p-8 border border-gray-100 relative overflow-hidden h-[240px] animate-pulse shadow-sm">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
-                        </div>
-                        <div className="h-10 w-3/4 bg-gray-200 rounded-full mb-4"></div>
-                        <div className="h-5 w-1/2 bg-gray-200 rounded-full mb-8"></div>
-                        <div className="h-14 w-full bg-gray-100 rounded-2xl mt-auto absolute bottom-8 left-8 right-8" style={{ width: 'calc(100% - 64px)' }}></div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div className="lg:col-span-8 space-y-10">
+                    <div className="bg-gray-50 rounded-[3rem] h-80 w-full shadow-inner"></div>
+                    <div className="grid grid-cols-3 gap-8">
+                        <div className="h-48 bg-gray-100 rounded-[2.5rem]"></div>
+                        <div className="h-48 bg-gray-100 rounded-[2.5rem]"></div>
+                        <div className="h-48 bg-gray-100 rounded-[2.5rem]"></div>
                     </div>
                 </div>
-                <div className="lg:col-span-1">
-                    <div className="bg-white rounded-3xl p-6 border border-gray-100 h-full animate-pulse shadow-sm min-h-[300px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="h-7 w-24 bg-gray-200 rounded-full"></div>
-                        </div>
-                        <div className="flex gap-3 mb-6">
-                            <div className="flex-1 h-12 bg-gray-100 rounded-2xl"></div>
-                            <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
-                        </div>
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-14 bg-gray-50 rounded-xl w-full"></div>
-                            ))}
-                        </div>
-                    </div>
+                <div className="lg:col-span-4">
+                    <div className="bg-gray-50 rounded-[3rem] h-[600px] w-full shadow-inner"></div>
                 </div>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
-                {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between aspect-[4/3] animate-pulse shadow-sm">
-                        <div className="w-12 h-12 rounded-2xl bg-gray-100 mb-2"></div>
-                        <div>
-                            <div className="h-10 w-16 bg-gray-200 rounded-lg mb-2"></div>
-                            <div className="h-4 w-20 bg-gray-200 rounded-full"></div>
-                        </div>
-                    </div>
-                ))}
             </div>
         </div>
     )
 }
 
+/**
+ * DashboardPage - Client-side wrapper for the server-rendered dashboard.
+ * Manages the top-level layout, persistent navigation, and background layers.
+ */
 export default function DashboardPage() {
     return (
-        <div className="min-h-screen bg-[#F9F9F6] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
+        <div className="min-h-screen bg-[#F9F9F6] font-sans selection:bg-green-100 selection:text-green-900 overflow-x-hidden">
             <Navigation />
-            <main className="md:pl-[220px] xl:pl-[260px] pb-24 md:pb-0">
+
+            {/* Content Offset for the Kinetic Sidebar */}
+            <main className="md:pl-[260px] xl:pl-[300px] pb-32 md:pb-0 relative">
+                {/* Visual Depth Overlay */}
+                <div className="fixed top-0 right-0 w-[50vw] h-screen bg-green-500/5 -z-10 blur-[150px] opacity-20 pointer-events-none" />
+
                 <Suspense fallback={<DashboardSkeleton />}>
                     <DashboardContent />
                 </Suspense>
