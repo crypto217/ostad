@@ -10,6 +10,11 @@ export async function GET(
     const classId = searchParams.get('classId')
     const trimester = searchParams.get('trimester')
 
+    console.log('=== EXPORT DEBUG ===')
+    console.log('classId:', classId)
+    console.log('trimester:', trimester)
+    console.log('full URL:', request.url)
+
     if (!classId || !trimester) {
         return NextResponse.json({ error: 'Missing classId or trimester' }, { status: 400 })
     }
@@ -27,15 +32,23 @@ export async function GET(
         }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    console.log('user:', user?.id)
+    console.log('authError:', authError?.message)
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // 1. Fetch class details (RLS handles ownership)
     const { data: classData, error: classError } = await supabase
         .from('classes')
-        .select('id, class_name, name')
+        .select('id, class_name, teacher_id')
         .eq('id', classId)
         .single()
+
+    console.log('classData:', JSON.stringify(classData))
+    console.log('classError:', JSON.stringify(classError))
+    console.log('=== END DEBUG ===')
 
     if (classError || !classData) {
         return NextResponse.json({ error: 'Class not found' }, { status: 404 })
