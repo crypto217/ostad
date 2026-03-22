@@ -14,6 +14,11 @@ interface StudentCardProps {
 export default function StudentCard({ student, view }: StudentCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const genderDisplay = (gender: string) => {
+        if (gender === 'male' || gender === 'Garçon') return '👦 Garçon'
+        if (gender === 'female' || gender === 'Fille') return '👧 Fille'
+        return gender
+    }
 
     const handleDelete = async () => {
         setIsMenuOpen(false)
@@ -90,7 +95,7 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                 </td>
                 <td className="px-6 py-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 tracking-wide">
-                        {student.gender === 'Garçon' ? '👦' : '👧'} {student.gender}
+                        {genderDisplay(student.gender)}
                     </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 font-medium">
@@ -115,7 +120,7 @@ export default function StudentCard({ student, view }: StudentCardProps) {
                     </h3>
                     <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
                         <span className="flex items-center gap-1">
-                            {student.gender === 'Garçon' ? '👦' : '👧'} {student.gender}
+                            {genderDisplay(student.gender)}
                         </span>
                         <span className="bg-gray-300 w-1 h-1 rounded-full shrink-0" />
                         <span>{new Date(student.birth_date).toLocaleDateString('fr-FR')}</span>

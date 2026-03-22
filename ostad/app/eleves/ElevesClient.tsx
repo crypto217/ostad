@@ -20,6 +20,12 @@ interface ClassWithStudents {
 
 export default function ElevesClient({ classes }: { classes: ClassWithStudents[] }) {
     const [searchQuery, setSearchQuery] = useState('')
+    const genderDisplay = (gender: string | null) => {
+        if (!gender) return ''
+        if (gender === 'male' || gender === 'Garçon') return '👦 Garçon'
+        if (gender === 'female' || gender === 'Fille') return '👧 Fille'
+        return gender
+    }
 
     const filteredClasses = classes.map(cls => ({
         ...cls,
@@ -96,7 +102,7 @@ export default function ElevesClient({ classes }: { classes: ClassWithStudents[]
                                                     {student.last_name} {student.first_name}
                                                 </p>
                                                 <p className="text-xs text-gray-500 mt-0.5">
-                                                    {student.gender === 'male' || student.gender === 'Garçon' ? 'Garçon' : 'Fille'}
+                                                    {genderDisplay(student.gender)}
                                                 </p>
                                             </div>
                                         </div>

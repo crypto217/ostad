@@ -14,7 +14,9 @@ export default function EditStudentModal({ student }: { student: StudentItem }) 
 
     const [firstName, setFirstName] = useState(student.first_name)
     const [lastName, setLastName] = useState(student.last_name)
-    const [gender, setGender] = useState<'Garçon' | 'Fille'>(student.gender)
+    // Map DB gender to FR for UI
+    const initialGender = (student.gender as string) === 'male' || student.gender === 'Garçon' ? 'Garçon' : 'Fille'
+    const [gender, setGender] = useState<'Garçon' | 'Fille'>(initialGender as 'Garçon' | 'Fille')
     const [dob, setDob] = useState(initialDate)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
