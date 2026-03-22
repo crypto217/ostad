@@ -121,7 +121,7 @@ async function DashboardContent() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
             {classesCount === 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-5 mb-8 relative overflow-hidden shadow-sm">
                     <div className="relative z-10 text-yellow-800">
@@ -137,25 +137,23 @@ async function DashboardContent() {
 
             {profile && <Header profile={profile} />}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="lg:col-span-2">
                     <HeroCard nextCourse={nextCourseFormatted} />
                 </div>
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 min-w-0 overflow-hidden">
                     <TodoBlock initialTodos={topPendingTodos} />
                 </div>
             </div>
 
-            <div className="mt-8">
-                <KPIGrid stats={stats} />
-            </div>
+            <KPIGrid stats={stats} />
         </div>
     )
 }
 
 function DashboardSkeleton() {
     return (
-        <div className="max-w-7xl mx-auto px-4 py-6 md:px-8 md:py-8">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
             <div className="flex justify-between items-center mb-10 animate-pulse">
                 <div>
                     <div className="h-10 bg-gray-200 rounded-full w-48 mb-3"></div>
@@ -166,8 +164,8 @@ function DashboardSkeleton() {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-8 md:grid md:grid-cols-12 md:gap-8 items-start">
-                <div className="md:col-span-12 xl:col-span-8 flex flex-col gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="lg:col-span-2">
                     <div className="bg-white rounded-3xl p-8 border border-gray-100 relative overflow-hidden h-[240px] animate-pulse shadow-sm">
                         <div className="flex justify-between items-start mb-6">
                             <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
@@ -176,22 +174,9 @@ function DashboardSkeleton() {
                         <div className="h-5 w-1/2 bg-gray-200 rounded-full mb-8"></div>
                         <div className="h-14 w-full bg-gray-100 rounded-2xl mt-auto absolute bottom-8 left-8 right-8" style={{ width: 'calc(100% - 64px)' }}></div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-5">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between aspect-[4/3] animate-pulse shadow-sm">
-                                <div className="w-12 h-12 rounded-2xl bg-gray-100 mb-2"></div>
-                                <div>
-                                    <div className="h-10 w-16 bg-gray-200 rounded-lg mb-2"></div>
-                                    <div className="h-4 w-20 bg-gray-200 rounded-full"></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
-
-                <div className="md:col-span-12 xl:col-span-4 xl:mt-0">
-                    <div className="bg-white rounded-3xl p-6 border border-gray-100 mb-8 animate-pulse shadow-sm">
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-3xl p-6 border border-gray-100 h-full animate-pulse shadow-sm min-h-[300px]">
                         <div className="flex justify-between items-center mb-6">
                             <div className="h-7 w-24 bg-gray-200 rounded-full"></div>
                         </div>
@@ -201,14 +186,23 @@ function DashboardSkeleton() {
                         </div>
                         <div className="space-y-4">
                             {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex items-center gap-4 py-4 px-5 bg-gray-50 rounded-xl">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 shrink-0"></div>
-                                    <div className="h-5 bg-gray-100 rounded-full flex-1"></div>
-                                </div>
+                                <div key={i} className="h-14 bg-gray-50 rounded-xl w-full"></div>
                             ))}
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 flex flex-col justify-between aspect-[4/3] animate-pulse shadow-sm">
+                        <div className="w-12 h-12 rounded-2xl bg-gray-100 mb-2"></div>
+                        <div>
+                            <div className="h-10 w-16 bg-gray-200 rounded-lg mb-2"></div>
+                            <div className="h-4 w-20 bg-gray-200 rounded-full"></div>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     )
@@ -216,11 +210,13 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
     return (
-        <div className="min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 md:pl-[220px] xl:pl-[260px] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
-            <Suspense fallback={<DashboardSkeleton />}>
-                <DashboardContent />
-            </Suspense>
+        <div className="min-h-screen bg-[#F9F9F6] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
             <Navigation />
+            <main className="md:pl-[220px] xl:pl-[260px] pb-24 md:pb-0">
+                <Suspense fallback={<DashboardSkeleton />}>
+                    <DashboardContent />
+                </Suspense>
+            </main>
         </div>
     )
 }
