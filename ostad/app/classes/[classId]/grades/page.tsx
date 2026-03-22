@@ -7,6 +7,8 @@ import GradesTable from '@/components/grades/GradesTable'
 import AddEvaluationModal from '@/components/grades/AddEvaluationModal'
 import BackButton from '@/components/layout/BackButton'
 import Navigation from '@/components/layout/Navigation'
+import { seedDefaultGradesForExistingStudents } from '@/app/actions'
+
 
 export const metadata = {
     title: 'Carnet de Notes | Ostad',
@@ -66,9 +68,27 @@ export default async function GradesPage({
 
     if (gradesError) throw new Error(gradesError.message)
 
+    // Auto-seed default evaluations for existing students if none exist yet
+    let gradesData = grades
+    if ((!grades || grades.length === 0) && students && students.length > 0) {
+        try {
+            await seedDefaultGradesForExistingStudents(classId)
+            // Re-fetch grades after seeding
+            const { data: seededGrades } = await supabase
+                .from('grades')
+                .select('*')
+                .eq('class_id', classId)
+                .eq('trimester', selectedTrimester)
+            gradesData = seededGrades
+        } catch (e) {
+            console.error('Auto-seed failed:', e)
+        }
+    }
+
     // Deduplicate evaluations (by title)
     const evalMap = new Map<string, { title: string; max_value: number; date: string }>()
-    grades?.forEach(g => {
+    gradesData?.forEach(g => {
+
         if (!evalMap.has(g.evaluation_title)) {
             evalMap.set(g.evaluation_title, {
                 title: g.evaluation_title,
@@ -128,9 +148,13 @@ export default async function GradesPage({
                 {/* Grades Table */}
                 <GradesTable
                     students={students || []}
-                    grades={grades || []}
+                    grades={gradesData || []}
                     evaluations={evaluations}
+                    classId={classId}
+                    trimester={selectedTrimester}
                 />
+
+
             </div>
 
             <Navigation />

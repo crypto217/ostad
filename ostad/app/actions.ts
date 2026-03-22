@@ -86,6 +86,13 @@ function mapGender(gender: string): string {
     return gender
 }
 
+// Default evaluations to seed when the first student is added to a class
+const DEFAULT_EVALUATIONS = [
+    { title: 'Devoir 1', max_value: 20 },
+    { title: 'Devoir 2', max_value: 20 },
+    { title: 'Examen', max_value: 20 },
+]
+
 export async function createStudent(data: { class_id: string; first_name: string; last_name: string; gender: string; birth_date: string }) {
     const supabase = await getSupabase()
     const { data: { user } } = await supabase.auth.getUser()
@@ -93,20 +100,84 @@ export async function createStudent(data: { class_id: string; first_name: string
     console.log('STUDENT DATA:', JSON.stringify(data))
     console.log('USER:', user?.id)
 
-    const { error } = await supabase.from('students').insert({
+    // Insert the student and retrieve the new row id
+    const { data: newStudent, error } = await supabase.from('students').insert({
         class_id: data.class_id,
         first_name: data.first_name,
         last_name: data.last_name,
         gender: mapGender(data.gender),
         birth_date: data.birth_date
-    })
+    }).select('id').single()
 
     if (error) {
         console.error('STUDENT ERROR:', JSON.stringify(error))
         return { error: error.message, code: error.code }
     }
 
+    const studentId = newStudent.id
+    const today = new Date().toISOString().split('T')[0]
+
+    // Check existing evaluations for this class (any trimester)
+    const { data: existingGrades } = await supabase
+        .from('grades')
+        .select('evaluation_title, max_value, trimester, evaluation_date')
+        .eq('class_id', data.class_id)
+
+    const gradesToInsert: {
+        class_id: string
+        student_id: string
+        evaluation_title: string
+        grade_value: null
+        max_value: number
+        trimester: number
+        evaluation_date: string
+    }[] = []
+
+    if (existingGrades && existingGrades.length > 0) {
+        // De-duplicate evaluations by (title, trimester) and create a row for the new student
+        const seen = new Set<string>()
+        for (const g of existingGrades) {
+            const key = `${g.evaluation_title}__${g.trimester}`
+            if (!seen.has(key)) {
+                seen.add(key)
+                gradesToInsert.push({
+                    class_id: data.class_id,
+                    student_id: studentId,
+                    evaluation_title: g.evaluation_title,
+                    grade_value: null,
+                    max_value: g.max_value,
+                    trimester: g.trimester,
+                    evaluation_date: g.evaluation_date ?? today,
+                })
+            }
+        }
+    } else {
+        // First student: seed the 9 default evaluations across 3 trimesters
+        for (const trimester of [1, 2, 3] as const) {
+            for (const evalDef of DEFAULT_EVALUATIONS) {
+                gradesToInsert.push({
+                    class_id: data.class_id,
+                    student_id: studentId,
+                    evaluation_title: evalDef.title,
+                    grade_value: null,
+                    max_value: evalDef.max_value,
+                    trimester,
+                    evaluation_date: today,
+                })
+            }
+        }
+    }
+
+    if (gradesToInsert.length > 0) {
+        const { error: gradesError } = await supabase.from('grades').insert(gradesToInsert)
+        if (gradesError) {
+            console.error('GRADES SEED ERROR:', JSON.stringify(gradesError))
+            // Non-fatal: student is created, grades will be missing but won't crash
+        }
+    }
+
     revalidatePath(`/classes/${data.class_id}/students`)
+    revalidatePath(`/classes/${data.class_id}/grades`)
     revalidatePath('/eleves')
     return { success: true }
 }
@@ -391,6 +462,102 @@ export async function updateGrade(gradeId: string, value: number | null) {
     if (error) throw new Error(error.message)
     // Client side will handle optimistic UI, no strict revalidate needed for the table itself, 
     // but maybe useful if refreshed.
+    return { success: true }
+}
+
+export async function deleteEvaluation(
+    classId: string,
+    evaluationTitle: string,
+    trimester: number
+) {
+    const supabase = await getSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    // Verify class belongs to teacher
+    const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('id', classId)
+        .eq('teacher_id', user.id)
+        .single()
+
+    if (classError || !classData) throw new Error('Unauthorized or class not found')
+
+    const { error } = await supabase
+        .from('grades')
+        .delete()
+        .eq('class_id', classId)
+        .eq('evaluation_title', evaluationTitle)
+        .eq('trimester', trimester)
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath(`/classes/${classId}/grades`)
+    return { success: true }
+}
+
+export async function seedDefaultGradesForExistingStudents(classId: string) {
+    const supabase = await getSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    // Verify class belongs to teacher
+    const { data: classData, error: classError } = await supabase
+        .from('classes')
+        .select('id')
+        .eq('id', classId)
+        .eq('teacher_id', user.id)
+        .single()
+
+    if (classError || !classData) throw new Error('Unauthorized or class not found')
+
+    // Fetch all students
+    const { data: students, error: studentsError } = await supabase
+        .from('students')
+        .select('id')
+        .eq('class_id', classId)
+
+    if (studentsError) throw new Error(studentsError.message)
+    if (!students || students.length === 0) return { success: true }
+
+    // Double-check no grades exist yet (safety guard)
+    const { data: existingGrades } = await supabase
+        .from('grades')
+        .select('id')
+        .eq('class_id', classId)
+        .limit(1)
+
+    if (existingGrades && existingGrades.length > 0) {
+        // Grades already exist — nothing to seed
+        return { success: true }
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    const defaultEvals = [
+        { title: 'Devoir 1', max_value: 20 },
+        { title: 'Devoir 2', max_value: 20 },
+        { title: 'Examen', max_value: 20 },
+    ]
+
+    const gradesToInsert = students.flatMap(student =>
+        ([1, 2, 3] as const).flatMap(trimester =>
+            defaultEvals.map(evalDef => ({
+                class_id: classId,
+                student_id: student.id,
+                evaluation_title: evalDef.title,
+                grade_value: null,
+                max_value: evalDef.max_value,
+                trimester,
+                evaluation_date: today,
+            }))
+        )
+    )
+
+    const { error } = await supabase.from('grades').insert(gradesToInsert)
+    if (error) throw new Error(error.message)
+
+    revalidatePath(`/classes/${classId}/grades`)
     return { success: true }
 }
 

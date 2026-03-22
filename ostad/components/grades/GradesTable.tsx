@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
-import { updateGrade } from '@/app/actions'
+import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { Trash2 } from 'lucide-react'
+import { updateGrade, deleteEvaluation } from '@/app/actions'
 
 type Student = {
     id: string
@@ -26,61 +28,72 @@ type Evaluation = {
 export default function GradesTable({
     students,
     grades,
-    evaluations
+    evaluations,
+    classId,
+    trimester,
 }: {
     students: Student[]
     grades: Grade[]
     evaluations: Evaluation[]
+    classId: string
+    trimester: number
 }) {
+    const router = useRouter()
     const [localGrades, setLocalGrades] = useState<Grade[]>(grades)
+    const [savingId, setSavingId] = useState<string | null>(null)
+    const [deletingEval, setDeletingEval] = useState<string | null>(null)
 
     // Sort students alphabetically
     const sortedStudents = [...students].sort((a, b) => a.last_name.localeCompare(b.last_name))
-
-    // Debounce state
-    const [savingId, setSavingId] = useState<string | null>(null)
 
     const handleGradeChange = useCallback((gradeId: string, newValueStr: string, maxValue: number) => {
         let numericValue: number | null = null
 
         if (newValueStr.trim() !== '') {
             numericValue = parseFloat(newValueStr)
-            if (isNaN(numericValue)) return // Invalid input
+            if (isNaN(numericValue)) return
             if (numericValue < 0) numericValue = 0
             if (numericValue > maxValue) numericValue = maxValue
         }
 
-        // Optimistic UI update
+        // Optimistic update
         setLocalGrades(prev => prev.map(g =>
             g.id === gradeId ? { ...g, grade_value: numericValue } : g
         ))
 
-        // Trigger Auto-save (simplified debounce approach for MVP)
         setSavingId(gradeId)
-
-        // Use a timeout to simulate debounce, in a real app use a proper useDebounce hook
-        // or a ref to clear previous timeouts.
-        const timeoutId = setTimeout(async () => {
+        setTimeout(async () => {
             try {
                 await updateGrade(gradeId, numericValue)
             } catch (error) {
-                console.error("Failed to save grade", error)
-                // Revert logic could be implemented here
+                console.error('Failed to save grade', error)
             } finally {
                 setSavingId(null)
             }
         }, 800)
-
-        // Return cleanup function (if we were putting this in a useEffect or properly managing refs)
-        // For inline, we'll accept the potential multiple rapid saves for MVP, or we can use a small map.
     }, [])
+
+    const handleDeleteEvaluation = useCallback(async (evalTitle: string) => {
+        const confirmed = window.confirm(
+            `Supprimer l'évaluation "${evalTitle}" pour tous les élèves ?\n\nCette action est irréversible.`
+        )
+        if (!confirmed) return
+
+        setDeletingEval(evalTitle)
+        try {
+            await deleteEvaluation(classId, evalTitle, trimester)
+            router.refresh()
+        } catch (error) {
+            console.error('Failed to delete evaluation', error)
+            alert("Erreur lors de la suppression de l'évaluation.")
+        } finally {
+            setDeletingEval(null)
+        }
+    }, [classId, trimester, router])
 
     const getGradeColor = (value: number | null, max_value: number) => {
         if (value === null) return 'text-gray-400'
-
-        // Normalize to /20 for color coding
         const normalized = (value / max_value) * 20
-
         if (normalized < 10) return 'text-red-600 font-semibold'
         if (normalized >= 10 && normalized < 15) return 'text-orange-500 font-semibold'
         return 'text-green-600 font-semibold'
@@ -98,7 +111,7 @@ export default function GradesTable({
         })
 
         if (totalMax === 0) return null
-        return (sum / totalMax) * 20 // Return average out of 20
+        return (sum / totalMax) * 20
     }
 
     if (evaluations.length === 0) {
@@ -125,10 +138,28 @@ export default function GradesTable({
                                 Élève
                             </th>
                             {evaluations.map((evalItem, idx) => (
-                                <th key={idx} scope="col" className="px-6 py-4 font-semibold text-center min-w-[120px]">
-                                    <div className="truncate" title={evalItem.title}>{evalItem.title}</div>
-                                    <div className="text-[10px] text-gray-400 font-normal mt-1">
-                                        /{evalItem.max_value} • {new Date(evalItem.date).toLocaleDateString()}
+                                <th key={idx} scope="col" className="px-4 py-4 font-semibold text-center min-w-[130px]">
+                                    <div className="flex items-center justify-center gap-1.5 group">
+                                        <div className="flex flex-col items-center">
+                                            <span className="truncate max-w-[90px]" title={evalItem.title}>
+                                                {evalItem.title}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-normal mt-0.5">
+                                                /{evalItem.max_value} • {new Date(evalItem.date).toLocaleDateString('fr-FR')}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteEvaluation(evalItem.title)}
+                                            disabled={deletingEval === evalItem.title}
+                                            title={`Supprimer "${evalItem.title}"`}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg disabled:opacity-50 shrink-0"
+                                        >
+                                            {deletingEval === evalItem.title ? (
+                                                <span className="w-3.5 h-3.5 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
+                                            ) : (
+                                                <Trash2 size={13} />
+                                            )}
+                                        </button>
                                     </div>
                                 </th>
                             ))}
@@ -143,12 +174,12 @@ export default function GradesTable({
 
                             return (
                                 <tr key={student.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-gray-900 sticky left-0 bg-white group-hover:bg-gray-50 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                        {student.last_name.toUpperCase()} <span className="capitalize font-normal text-gray-600">{student.first_name}</span>
+                                    <td className="px-6 py-4 font-medium text-gray-900 sticky left-0 bg-white z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                        {student.last_name.toUpperCase()}{' '}
+                                        <span className="capitalize font-normal text-gray-600">{student.first_name}</span>
                                     </td>
 
                                     {evaluations.map((evalItem, idx) => {
-                                        // Find the specific grade entry for this student and evaluation
                                         const gradeEntry = localGrades.find(
                                             g => g.student_id === student.id && g.evaluation_title === evalItem.title
                                         )
