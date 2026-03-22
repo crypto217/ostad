@@ -31,10 +31,14 @@ export default function CreateClassModal() {
 
         setIsSubmitting(true)
         try {
-            await createClass({ class_name: name.trim(), cycle, color_code: color })
-            handleClose()
-        } catch (error) {
-            alert('Erreur lors de la création de la classe.')
+            const result = await createClass({ class_name: name.trim(), cycle, color_code: color })
+            if (result && 'error' in result) {
+                alert('Erreur: ' + result.error + ' Code: ' + result.code)
+            } else {
+                handleClose()
+            }
+        } catch (error: any) {
+            alert('Erreur lors de la création de la classe : ' + error.message)
         } finally {
             setIsSubmitting(false)
         }

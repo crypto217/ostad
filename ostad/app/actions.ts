@@ -30,10 +30,14 @@ export async function createClass(data: { class_name: string; color_code: string
     console.log("createClass ACTION STARTED with:", data);
     const supabase = await getSupabase()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log("AUTH USER:", user?.id, "ERROR:", authError);
+
+    console.log('USER ID:', user?.id)
+    console.log('DATA:', JSON.stringify(data))
+    console.log("AUTH USER ERROR:", authError);
+
     if (!user) {
         console.error("No user found!");
-        throw new Error("Unauthorized")
+        return { error: "Unauthorized", code: "401" }
     }
 
     console.log("INSERTING INTO CLASSES...");
@@ -43,13 +47,14 @@ export async function createClass(data: { class_name: string; color_code: string
         color_code: data.color_code,
         cycle: data.cycle
     })
-    console.log("INSERT RESULT ERROR:", error);
 
     if (error) {
-        console.error("Supabase error in createClass:", error);
-        throw new Error(error.message || "Erreur lors de la création de la classe")
+        console.error('SUPABASE ERROR:', JSON.stringify(error))
+        return { error: error.message, code: error.code }
     }
+
     revalidatePath('/classes')
+    return { success: true }
 }
 
 export async function updateClass(id: string, data: { class_name: string; color_code: string; cycle: string }) {
