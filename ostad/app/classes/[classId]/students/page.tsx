@@ -7,6 +7,7 @@ import Navigation from '@/components/layout/Navigation'
 import StudentCard from '@/components/students/StudentCard'
 import AddStudentModal from '@/components/students/AddStudentModal'
 import EditStudentModal from '@/components/students/EditStudentModal'
+import BackButton from '@/components/layout/BackButton'
 
 export interface StudentItem {
     id: string
@@ -59,7 +60,7 @@ export default async function StudentsPage({ params, searchParams }: { params: P
     return (
         <div className="min-h-screen bg-[#F9F9F6] pb-24 md:pb-0 md:pl-[220px] xl:pl-[260px] font-sans selection:bg-green-100 selection:text-green-900 transition-all">
             <div className="max-w-md md:max-w-none md:container mx-auto px-6 pt-12 md:p-8 lg:p-12 xl:p-12">
-
+                <BackButton />
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                     <div className="flex items-center gap-4">

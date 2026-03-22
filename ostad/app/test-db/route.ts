@@ -15,18 +15,9 @@ export async function GET() {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    let userClasses = [];
-    if (user) {
-        const { data } = await supabase.from('classes').select('*').eq('teacher_id', user.id);
-        userClasses = data || [];
-    }
-
-    const { data: allClasses } = await supabase.from('classes').select('*');
+    const { data: allSessions } = await supabase.from('course_sessions').select('*');
 
     return NextResponse.json({
-        userId: user?.id,
-        userClasses,
-        allClassesCount: allClasses?.length || 0,
-        allClasses
+        allSessions
     })
 }

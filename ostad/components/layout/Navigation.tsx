@@ -11,7 +11,7 @@ export default function Navigation() {
         { name: 'Dashboard', href: '/dashboard', icon: Home },
         { name: 'Planning', href: '/planning', icon: Calendar },
         { name: 'Classes', href: '/classes', icon: Users },
-        { name: 'Élèves', href: '/students', icon: GraduationCap },
+        { name: 'Élèves', href: '/eleves', icon: GraduationCap },
         { name: 'Paramètres', href: '/settings', icon: Settings },
     ]
 

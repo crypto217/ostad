@@ -33,7 +33,7 @@ export default function Header({ profile }: HeaderProps) {
     }, [profile.preferred_language])
 
     // Get just the first name for a friendlier greeting
-    const firstName = profile.full_name?.split(' ')[0] || 'Prof'
+    const firstName = profile.full_name?.split(' ')[0] || ''
 
     const getGreeting = () => {
         if (profile.preferred_language === 'ar') {
