@@ -6,7 +6,7 @@ import { notFound, useRouter } from 'next/navigation'
 import { Loader2, Plus, ArrowLeft } from 'lucide-react'
 import GradesTable from '@/components/grades/GradesTable'
 import AddEvaluationModal from '@/components/grades/AddEvaluationModal'
-import { seedDefaultEvaluations } from '@/app/actions'
+import { seedDefaultGradesForExistingStudents } from '@/app/actions'
 import BackButton from '@/components/layout/BackButton'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
@@ -48,7 +48,7 @@ export default function GradesPage({ params }: { params: { classId: string } }) 
             setClassData(classDetails)
 
             // Auto-seed default evaluations (Comportement) if missing
-            await seedDefaultEvaluations(params.classId)
+            await seedDefaultGradesForExistingStudents(params.classId)
 
             // Fetch students
             const { data: studentsData } = await supabase
@@ -120,8 +120,8 @@ export default function GradesPage({ params }: { params: { classId: string } }) 
                                 key={tri}
                                 onClick={() => setCurrentTrimester(tri)}
                                 className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all ${currentTrimester === tri
-                                        ? 'bg-white text-blue-600 shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-blue-600 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {t('grades_trimester')} {tri}
@@ -146,6 +146,7 @@ export default function GradesPage({ params }: { params: { classId: string } }) 
                     evaluations={evaluations}
                     initialGrades={grades}
                     trimester={currentTrimester}
+                    classId={params.classId}
                 />
             </div>
 

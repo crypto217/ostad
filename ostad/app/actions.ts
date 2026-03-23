@@ -440,16 +440,17 @@ export async function createEvaluation(data: { class_id: string; evaluation_titl
     return { success: true }
 }
 
-export async function updateGrade(gradeId: string, value: number | null) {
+export async function updateGrade(studentId: string, evaluationId: string, value: number | null) {
     const supabase = await getSupabase()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Unauthorized')
 
-    // Verify grade belongs to a class owned by the teacher
+    // Verify ownership indirectly via students/classes
     const { data: gradeData, error: gradeError } = await supabase
         .from('grades')
         .select(`id, classes!inner(teacher_id)`)
-        .eq('id', gradeId)
+        .eq('student_id', studentId)
+        .eq('evaluation_id', evaluationId)
         .eq('classes.teacher_id', user.id)
         .single();
 
@@ -458,11 +459,9 @@ export async function updateGrade(gradeId: string, value: number | null) {
     const { error } = await supabase
         .from('grades')
         .update({ grade_value: value })
-        .eq('id', gradeId)
+        .eq('id', gradeData.id)
 
     if (error) throw new Error(error.message)
-    // Client side will handle optimistic UI, no strict revalidate needed for the table itself, 
-    // but maybe useful if refreshed.
     return { success: true }
 }
 

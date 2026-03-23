@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Clock, Play } from 'lucide-react'
-import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 /**
  * Interface for the next course data structure.
@@ -26,7 +25,6 @@ interface HeroCardProps {
  * Features a high-impact green background, Inter-black (900) typography, and a glassmorphic countdown.
  */
 export default function HeroCard({ nextCourse }: HeroCardProps) {
-    const { language, t } = useLanguage()
     const [timeLeft, setTimeLeft] = useState<{ value: string; label: string }>({
         value: '00:00',
         label: 'minutes'
@@ -59,12 +57,12 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
             if (hours > 0) {
                 setTimeLeft({
                     value: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
-                    label: hours === 1 ? (t('hour') || 'heure') : (t('hours') || 'heures')
+                    label: hours === 1 ? 'heure' : 'heures'
                 })
             } else {
                 setTimeLeft({
                     value: `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
-                    label: minutes === 1 ? (t('minute') || 'minute') : (t('minutes') || 'minutes')
+                    label: minutes === 1 ? 'minute' : 'minutes'
                 })
             }
         }
@@ -72,10 +70,10 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
         calculateTime()
         const interval = setInterval(calculateTime, 1000)
         return () => clearInterval(interval)
-    }, [nextCourse, t])
+    }, [nextCourse])
 
     const formatTimeRange = (start: string, end: string) => {
-        const locale = language === 'ar' ? 'ar-DZ' : (language === 'fr' ? 'fr-FR' : 'en-US')
+        const locale = 'fr-FR'
         const formatOptions: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' }
         const startTime = new Date(start).toLocaleTimeString(locale, formatOptions)
         const endTime = new Date(end).toLocaleTimeString(locale, formatOptions)
@@ -106,7 +104,7 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
     }
 
     return (
-        <div className={`w-full group/hero ${language === 'ar' ? 'rtl' : ''}`}>
+        <div className="w-full group/hero">
             {/* Main Interactive Green Card */}
             <div className="bg-[#22C55E] rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_-12px_rgba(34,197,94,0.35)] min-h-[280px] relative overflow-hidden flex flex-col md:flex-row gap-10 items-center transition-all duration-500 hover:scale-[1.01]">
                 {/* Background Textures (Kinetic Overlays) */}
@@ -114,7 +112,7 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
                 <div className="absolute top-1/2 -left-40 w-96 h-96 bg-white/5 rounded-full blur-[100px]" />
 
                 {/* Left Column: Essential Course Information */}
-                <div className={`flex-1 w-full z-10 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
+                <div className="flex-1 w-full z-10 text-left">
                     <div className="bg-white/20 text-white rounded-xl px-5 py-2.5 text-xs font-semibold inline-flex items-center gap-2 w-fit backdrop-blur-md uppercase tracking-[0.15em]">
                         <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse shadow-[0_0_12px_rgba(255,255,255,0.9)]" />
                         {"Prochain cours"}
@@ -124,7 +122,7 @@ export default function HeroCard({ nextCourse }: HeroCardProps) {
                         {nextCourse.lesson_title}
                     </h2>
 
-                    <div className={`flex flex-wrap items-center gap-8 text-white font-normal text-sm ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
+                    <div className="flex flex-wrap items-center gap-8 text-white font-normal text-sm">
                         <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-2xl backdrop-blur-sm border border-transparent hover:bg-white/15 transition-colors">
                             <Users size={22} className="text-white shrink-0" strokeWidth={3} />
                             <span className="opacity-95">{nextCourse.class_name}</span>

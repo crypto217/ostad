@@ -31,9 +31,10 @@ interface GradesTableProps {
     evaluations: Evaluation[]
     initialGrades: Grade[]
     trimester: number
+    classId: string
 }
 
-export default function GradesTable({ students, evaluations, initialGrades, trimester }: GradesTableProps) {
+export default function GradesTable({ students, evaluations, initialGrades, trimester, classId }: GradesTableProps) {
     const { t, language } = useLanguage()
     const rtl = language === 'ar'
     const router = useRouter()
@@ -81,7 +82,7 @@ export default function GradesTable({ students, evaluations, initialGrades, trim
 
         setUpdating({ studentId, evalId })
         try {
-            await updateGrade(studentId, evalId, numValue)
+            const result = await updateGrade(studentId, evalId, numValue)
             const newGrades = [...grades]
             const index = newGrades.findIndex(g => g.student_id === studentId && g.evaluation_id === evalId)
             if (index > -1) {
@@ -103,7 +104,7 @@ export default function GradesTable({ students, evaluations, initialGrades, trim
 
         setIsDeleting(evaluation.id)
         try {
-            await deleteEvaluation(evaluation.id)
+            await deleteEvaluation(classId, evaluation.title, evaluation.trimester)
             router.refresh()
         } catch (error) {
             alert(t('grades_delete_error'))
@@ -234,9 +235,9 @@ export default function GradesTable({ students, evaluations, initialGrades, trim
                                     })}
                                     <td className={`sticky right-0 ${rtl ? 'left-0 right-auto' : ''} z-20 bg-blue-50/50 group-hover:bg-blue-100/50 backdrop-blur-sm px-6 py-4 text-center border-l border-blue-100 shadow-[-2px_0_5px_rgba(0,0,0,0.02)]`}>
                                         <span className={`text-base font-black ${avg === '-' ? 'text-gray-300' :
-                                                parseFloat(avg) >= 7 ? 'text-green-700' :
-                                                    parseFloat(avg) >= 5 ? 'text-blue-700' :
-                                                        'text-red-700'
+                                            parseFloat(avg) >= 7 ? 'text-green-700' :
+                                                parseFloat(avg) >= 5 ? 'text-blue-700' :
+                                                    'text-red-700'
                                             }`}>
                                             {avg}
                                         </span>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, Clock, X, Loader2, MessageSquare } from 'lucide-react'
-import { updateAttendance } from '@/app/actions'
+import { upsertAttendance } from '@/app/actions'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Student {
@@ -56,7 +56,11 @@ export default function AttendanceList({ sessionId, students, initialAttendances
         setAttendances(newAttendances)
 
         try {
-            await updateAttendance(sessionId, studentId, status)
+            const { success } = await upsertAttendance({
+                session_id: sessionId,
+                student_id: studentId,
+                status
+            })
         } catch (error) {
             // Revert on error
             setAttendances(initialAttendances)
@@ -80,7 +84,12 @@ export default function AttendanceList({ sessionId, students, initialAttendances
         setAttendances(newAttendances)
 
         try {
-            await updateAttendance(sessionId, studentId, currentAttendance.status, note)
+            const { success } = await upsertAttendance({
+                session_id: sessionId,
+                student_id: studentId,
+                status: currentAttendance.status,
+                participation_note: note
+            })
         } catch (error) {
             console.error(error)
         }
@@ -155,8 +164,8 @@ export default function AttendanceList({ sessionId, students, initialAttendances
                                                 onClick={() => handleStatusUpdate(student.id, 'present')}
                                                 disabled={updatingId === student.id}
                                                 className={`p-3 rounded-2xl transition-all ${status === 'present'
-                                                        ? 'bg-green-100 text-green-600 ring-2 ring-green-500/20'
-                                                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                                    ? 'bg-green-100 text-green-600 ring-2 ring-green-500/20'
+                                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                                                     }`}
                                                 title={t('att_present')}
                                             >
@@ -166,8 +175,8 @@ export default function AttendanceList({ sessionId, students, initialAttendances
                                                 onClick={() => handleStatusUpdate(student.id, 'late')}
                                                 disabled={updatingId === student.id}
                                                 className={`p-3 rounded-2xl transition-all ${status === 'late'
-                                                        ? 'bg-amber-100 text-amber-600 ring-2 ring-amber-500/20'
-                                                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                                    ? 'bg-amber-100 text-amber-600 ring-2 ring-amber-500/20'
+                                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                                                     }`}
                                                 title={t('att_late')}
                                             >
@@ -177,8 +186,8 @@ export default function AttendanceList({ sessionId, students, initialAttendances
                                                 onClick={() => handleStatusUpdate(student.id, 'absent')}
                                                 disabled={updatingId === student.id}
                                                 className={`p-3 rounded-2xl transition-all ${status === 'absent'
-                                                        ? 'bg-red-100 text-red-600 ring-2 ring-red-500/20'
-                                                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                                                    ? 'bg-red-100 text-red-600 ring-2 ring-red-500/20'
+                                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
                                                     }`}
                                                 title={t('att_absent')}
                                             >

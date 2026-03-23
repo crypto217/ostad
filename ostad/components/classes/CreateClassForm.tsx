@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
-import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface CreateClassFormProps {
     teacherId: string
@@ -21,14 +20,13 @@ const COLORS = [
 ]
 
 export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
-    const { t, language } = useLanguage()
     const [className, setClassName] = useState('')
     const [selectedColor, setSelectedColor] = useState(COLORS[0].code)
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
     const router = useRouter()
     const supabase = createClient()
-    const rtl = language === 'ar'
+    const rtl = false
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -43,7 +41,7 @@ export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
 
         if (error) {
             console.error('Error creating class:', error)
-            alert(t('classes_error_create'))
+            alert("Une erreur est survenue lors de la création de la classe.")
             setIsLoading(false)
         } else {
             setIsSuccess(true)
@@ -60,8 +58,8 @@ export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
                 <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-6">
                     <CheckCircle2 size={40} />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('classes_form_created')}</h2>
-                <p className="text-gray-500">{t('classes_redirecting')}</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Classe créée avec succès !</h2>
+                <p className="text-gray-500">Redirection vers le tableau de bord...</p>
             </div>
         )
     }
@@ -72,20 +70,20 @@ export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
                 <Link href="/dashboard" className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-500">
                     <ArrowLeft size={24} className={rtl ? 'rotate-180' : ''} />
                 </Link>
-                <h1 className="text-2xl font-bold text-gray-900">{t('classes_new')}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Nouvelle Classe</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-3">
                     <label htmlFor="className" className={`text-sm font-bold text-gray-700 ${rtl ? 'mr-1' : 'ml-1'}`}>
-                        {t('classes_form_name')}
+                        Nom de la classe
                     </label>
                     <input
                         id="className"
                         type="text"
                         value={className}
                         onChange={(e) => setClassName(e.target.value)}
-                        placeholder={t('classes_form_name_placeholder')}
+                        placeholder="Ex: 4ème AM, Terminale S, etc."
                         className={`w-full px-5 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:border-green-400 outline-none transition-all text-lg font-medium shadow-sm ${rtl ? 'text-right' : 'text-left'}`}
                         required
                     />
@@ -93,7 +91,7 @@ export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
 
                 <div className="space-y-4">
                     <label className={`text-sm font-bold text-gray-700 ${rtl ? 'mr-1' : 'ml-1'}`}>
-                        {t('classes_form_color')}
+                        Couleur de la classe
                     </label>
                     <div className="grid grid-cols-3 gap-4">
                         {COLORS.map((color) => (
@@ -123,10 +121,10 @@ export default function CreateClassForm({ teacherId }: CreateClassFormProps) {
                         {isLoading ? (
                             <div className={`flex items-center justify-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
                                 <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>{t('classes_form_creating')}</span>
+                                <span>Création en cours...</span>
                             </div>
                         ) : (
-                            t('classes_form_create')
+                            "Créer la classe"
                         )}
                     </button>
                 </div>

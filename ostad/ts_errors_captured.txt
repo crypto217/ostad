@@ -1,0 +1,14 @@
+﻿app/api/export/grades/route.ts(110,54): error TS2339: Property 'name' does not exist on type '{ id: any; class_name: any; teacher_id: any; }'.
+app/classes/[classId]/grades/page.tsx(9,10): error TS2305: Module '"@/app/actions"' has no exported member 'seedDefaultEvaluations'.
+app/settings/page.tsx(27,33): error TS2322: Type '{ initialProfile: any; }' is not assignable to type 'IntrinsicAttributes & SettingsClientProps'.
+  Property 'initialProfile' does not exist on type 'IntrinsicAttributes & SettingsClientProps'.
+components/attendance/AttendanceList.tsx(5,10): error TS2724: '"@/app/actions"' has no exported member named 'updateAttendance'. Did you mean 'upsertAttendance'?
+components/classes/CreateClassForm.tsx(63,74): error TS2345: Argument of type '"classes_form_created"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/classes/CreateClassForm.tsx(64,49): error TS2345: Argument of type '"classes_redirecting"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/dashboard/HeroCard.tsx(62,45): error TS2345: Argument of type '"hour"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/dashboard/HeroCard.tsx(62,70): error TS2345: Argument of type '"hours"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/dashboard/HeroCard.tsx(67,47): error TS2345: Argument of type '"minute"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/dashboard/HeroCard.tsx(67,75): error TS2345: Argument of type '"minutes"' is not assignable to parameter of type '"nav_dashboard" | "nav_planning" | "nav_classes" | "nav_eleves" | "nav_settings" | "nav_quick_access" | "nav_attendance" | "nav_grades" | "dash_no_course" | "dash_enjoy" | ... 169 more ... | "sett_save"'.
+components/grades/AddEvaluationModal.tsx(32,45): error TS2554: Expected 1 arguments, but got 2.
+components/grades/GradesTable.tsx(84,50): error TS2554: Expected 2 arguments, but got 3.
+components/grades/GradesTable.tsx(106,19): error TS2554: Expected 3 arguments, but got 1.

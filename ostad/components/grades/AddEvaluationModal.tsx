@@ -29,9 +29,12 @@ export default function AddEvaluationModal({ isOpen, onClose, classId, trimester
         e.preventDefault()
         setLoading(true)
         try {
-            await createEvaluation(classId, {
-                ...formData,
-                trimester
+            const result = await createEvaluation({
+                class_id: classId,
+                evaluation_title: formData.title,
+                max_value: Number(formData.max_value),
+                trimester: Number(trimester),
+                evaluation_date: new Date().toISOString()
             })
             onSuccess()
             setFormData({

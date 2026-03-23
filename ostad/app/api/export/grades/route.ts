@@ -107,7 +107,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-        className: classData.class_name || classData.name || 'Classe',
+        className: classData.class_name || 'Classe',
         trimester: parseInt(trimester),
         students: students || [],
         evaluations,

@@ -1,0 +1,2 @@
+﻿components/dashboard/HeroCard.tsx(25,37): error TS2304: Cannot find name 'useState'.
+components/dashboard/HeroCard.tsx(31,5): error TS2304: Cannot find name 'useEffect'.
