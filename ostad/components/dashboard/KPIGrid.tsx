@@ -1,7 +1,6 @@
 'use client'
 
 import { CheckSquare, Users, Presentation } from 'lucide-react'
-import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 /**
  * KPIProps - Strictly typed statistics interface.
@@ -20,8 +19,7 @@ interface KPIProps {
  * Uses the 'Kinetic Classroom' design: borderless containers, Inter-black typography, and interactive icons.
  */
 export default function KPIGrid({ stats }: KPIProps) {
-    const { t, language } = useLanguage()
-    const isRTL = language === 'ar'
+    // Note: useLanguage and t() removed to prevent i18n key display bug.
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -33,8 +31,8 @@ export default function KPIGrid({ stats }: KPIProps) {
                 <p className="text-2xl font-bold text-gray-900 tracking-tighter leading-none mb-3 drop-shadow-sm">
                     {stats.totalStudents}
                 </p>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] opacity-80">
-                    {t('dash_kpi_students') || "élèves"}
+                <p className="text-xs font-medium text-gray-500 tracking-[0.2em] opacity-80">
+                    Élèves
                 </p>
             </div>
 
@@ -47,8 +45,8 @@ export default function KPIGrid({ stats }: KPIProps) {
                     {stats.weeklyAttendance}
                     <span className="text-lg ml-1 text-green-500 opacity-80">%</span>
                 </p>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] opacity-80">
-                    {t('dash_kpi_attendance') || "présence"}
+                <p className="text-xs font-medium text-gray-500 tracking-[0.2em] opacity-80">
+                    Présence semaine
                 </p>
             </div>
 
@@ -60,8 +58,8 @@ export default function KPIGrid({ stats }: KPIProps) {
                 <p className="text-2xl font-bold text-gray-900 tracking-tighter leading-none mb-3 drop-shadow-sm">
                     {stats.classesToday}
                 </p>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-[0.2em] opacity-80">
-                    {t('dash_kpi_lessons') || "cours"}
+                <p className="text-xs font-medium text-gray-500 tracking-[0.2em] opacity-80">
+                    Cours du jour
                 </p>
             </div>
         </div>

@@ -122,7 +122,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             </div>
 
             {/* Dynamic Filter Tabs */}
-            <div className="flex gap-2 flex-wrap mt-3 z-10 mb-10">
+            <div className="flex flex-row gap-2 mt-3 z-10 mb-10 flex-wrap">
                 {[
                     { id: 'all', label: 'Tout', emoji: '📋' },
                     { id: 'to_correct', label: 'À corriger', emoji: '📝' },
@@ -142,7 +142,7 @@ export default function TodoBlock({ initialTodos }: TodoBlockProps) {
             </div>
 
             {/* Task List (Borderless Stacking) */}
-            <div className="flex-1 space-y-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar min-h-0 z-10">
+            <div className="flex-1 space-y-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar min-h-0 z-10 max-h-[400px]">
                 {filteredTodos.length === 0 ? (
                     <div className="text-center bg-gray-50/50 rounded-[2.5rem] py-20 border-none">
                         <div className="text-5xl mb-4 opacity-40">✨</div>
